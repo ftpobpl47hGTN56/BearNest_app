@@ -9,6 +9,14 @@
 
 ## 📱 Screenshots
 
+  <table><tr>
+    <td><img src="screenshots/photo_1_2026-05-28_18-43-38.jpg" width="160" alt="Home Screen"/></td>
+    <td><img src="screenshots/photo_2_2026-05-28_18-43-38.jpg" width="160" alt="Server List"/></td>
+    <td><img src="screenshots/photo_3_2026-05-28_18-43-38.jpg" width="160" alt="Settings"/></td>
+    <td><img src="screenshots/photo_4_2026-05-28_18-43-38.jpg" width="160" alt="Xray Logs"/></td>
+  </tr></table>
+</p>
+  
 <!-- TODO: add screenshots after first release -->
 _Coming soon_
 
