@@ -165,5 +165,4 @@ storeFile=../keystore/bearnest.jks
 Private repository. All rights reserved © 2026 BearNest.
 
 ---
-
-<p align="center">Made with ❤️ and Kotlin</p>
+ 
