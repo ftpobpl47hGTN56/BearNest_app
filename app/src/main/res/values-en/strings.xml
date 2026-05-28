@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">BearNest</string>
+    <string name="nav_home">Main</string>
+    <string name="nav_settings">Settings</string>
+    <string name="theme">Theme</string>
+    <string name="nav_servers">Servers</string>
+
+    <!-- Logs -->
+    <string name="logs_title">Xray Logs</string>
+    <string name="copy">Copy</string>
+    <string name="clear">Clear</string>
+    <string name="logs_empty_hint">Logs will appear after connection</string>
+
+    <!-- Connect / disconnect -->
+    <string name="connecting">Connecting…</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+
+    <!-- Server -->
+    <string name="server_not_selected">No server selected</string>
+    <string name="action_back">Back</string>
+    <string name="action_ping">Ping</string>
+    <string name="action_best_server">Best server</string>
+    <string name="servers_title_with_count" formatted="false">Servers (%d)</string>
+
+    <!-- Proxy -->
+    <string name="proxy_active">Proxy active</string>
+    <string name="proxy_hint">Configure proxy in WiFi or use an app supporting SOCKS5</string>
+
+    <!-- VPN status -->
+    <string name="vpn_connected">VPN connected</string>
+    <string name="traffic_secured">All traffic secured</string>
+
+    <!-- Modes -->
+    <string name="mode_proxy">Proxy</string>
+    <string name="mode_tun">TUN / VPN</string>
+
+    <!-- Subscription -->
+    <string name="subscription_expires_prefix">Until: </string>
+    <string name="loading">Loading…</string>
+    <string name="load_subscription">Load subscription</string>
+    <string name="subscription_url_label">Subscription URL</string>
+    <string name="subscription_url_placeholder">https://…</string>
+    <string name="subscription_label">Subscription</string>
+
+    <!-- Theme -->
+    <string name="theme_catppuccin">Catppuccin</string>
+
+    <!-- Language -->
+    <string name="language_label">Language</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="version_label">Version</string>
+    <string name="engine_label">Engine</string>
+    <string name="protocols_label">Protocols</string>
+    <string name="reality_label">Reality</string>
+    <string name="github_label">GitHub</string>
+    <string name="nav_logs">Logs</string>
+
+
+    <!-- App info (not translatable) -->
+    <string name="app_version" translatable="false">2.285.26</string>
+    <string name="engine_value" translatable="false">xray-core (XTLS/Xray-core)</string>
+    <string name="protocols_value" translatable="false">VLESS · VMess · Trojan · Shadowsocks</string>
+    <string name="reality_value" translatable="false">XTLS Vision + Reality</string>
+    <string name="github_url" translatable="false">github.com/ftpobpl47hGTN56/BearNest</string>
+
+    <!-- Errors -->
+    <string name="error_no_servers_found">No servers found in subscription</string>
+    <string name="error_loading_prefix">Loading error: %s</string>
+    <string name="error_start_prefix">Start error: %s</string>
+    <string name="error_no_server_selected">No server selected</string>
+    <string name="error_vpn_permission_required">VPN permission required</string>
+    <string name="vpn_permission_denied">VPN permission denied</string>
+
+</resources>

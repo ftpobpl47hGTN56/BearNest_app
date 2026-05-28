@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">BearNest</string>
+    <string name="nav_home">Главная </string>
+    <string name="nav_settings">Настройки</string>
+    <string name="theme">Темы</string>
+    <string name="nav_servers">Серверы</string>
+    <!-- Logs -->
+    <string name="logs_title">Логи Xray</string>
+    <string name="copy">Копировать</string>
+    <string name="clear">Очистить</string>
+    <string name="logs_empty_hint">Логи появятся после подключения</string>
+
+    <!-- Connect / disconnect -->
+    <string name="connecting">Подключение…</string>
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
+
+    <!-- Server -->
+    <string name="server_not_selected">Сервер не выбран</string>
+    <string name="action_back">Назад</string>
+    <string name="action_ping">Пинг</string>
+    <string name="action_best_server">Лучший сервер</string>
+    <string name="servers_title_with_count" formatted="false">Серверы (%d)</string>
+
+    <!-- Proxy -->
+    <string name="proxy_active">Прокси активен</string>
+    <string name="proxy_hint">Настройте прокси в WiFi или используйте приложение поддерживающее SOCKS5</string>
+
+    <!-- VPN status -->
+    <string name="vpn_connected">VPN подключён</string>
+    <string name="traffic_secured">Весь трафик защищён</string>
+
+    <!-- Modes -->
+    <string name="mode_proxy">Прокси</string>
+    <string name="mode_tun">TUN / VPN</string>
+
+    <!-- Subscription -->
+    <string name="subscription_expires_prefix">До: </string>
+    <string name="loading">Загрузка…</string>
+    <string name="load_subscription">Загрузить подписку</string>
+    <string name="subscription_url_label">URL подписки</string>
+    <string name="subscription_url_placeholder">https://…</string>
+    <string name="subscription_label">Подписка</string>
+
+    <!-- Theme -->
+    <string name="theme_catppuccin">Капучино</string>
+
+    <!-- Language -->
+    <string name="language_label">Язык</string>
+
+    <!-- About -->
+    <string name="about_title">О приложении</string>
+    <string name="version_label">Версия</string>
+    <string name="engine_label">Движок</string>
+    <string name="protocols_label">Протоколы</string>
+    <string name="reality_label">Reality</string>
+    <string name="github_label">GitHub</string>
+    <string name="nav_logs">Logs</string>
+
+    <!-- App info (not translatable) -->
+    <string name="app_version" translatable="false">2.285.26</string>
+    <string name="engine_value" translatable="false">xray-core (XTLS/Xray-core)</string>
+    <string name="protocols_value" translatable="false">VLESS · VMess · Trojan · Shadowsocks</string>
+    <string name="reality_value" translatable="false">XTLS Vision + Reality</string>
+    <string name="github_url" translatable="false">github.com/ftpobpl47hGTN56/BearNest</string>
+
+    <!-- Errors -->
+    <string name="error_no_servers_found">Серверы не найдены в подписке</string>
+    <string name="error_loading_prefix">Ошибка загрузки: %s</string>
+    <string name="error_start_prefix">Ошибка запуска: %s</string>
+    <string name="error_no_server_selected">Сервер не выбран</string>
+    <string name="error_vpn_permission_required">Требуется разрешение VPN</string>
+    <string name="vpn_permission_denied">VPN разрешение отклонено</string>
+</resources>

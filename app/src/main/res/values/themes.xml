@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.BearNest.Catppuccin" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/catppuccin_primary</item>
+        <item name="colorOnPrimary">@color/catppuccin_on_primary</item>
+        <item name="colorSecondary">@color/catppuccin_secondary</item>
+        <item name="android:colorBackground">@color/catppuccin_background</item>
+        <item name="colorSurface">@color/catppuccin_surface</item>
+        <item name="colorOnSurface">@color/catppuccin_on_surface</item>
+        <item name="colorSurfaceVariant">@color/catppuccin_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/catppuccin_on_surface_variant</item>
+        <item name="colorError">@color/catppuccin_error</item>
+        <item name="android:windowBackground">@color/catppuccin_background</item>
+        <item name="android:statusBarColor">@color/catppuccin_background</item>
+        <item name="android:navigationBarColor">@color/catppuccin_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.BearNest.Midnight" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/midnight_primary</item>
+        <item name="colorOnPrimary">@color/midnight_on_primary</item>
+        <item name="colorSecondary">@color/midnight_secondary</item>
+        <item name="android:colorBackground">@color/midnight_background</item>
+        <item name="colorSurface">@color/midnight_surface</item>
+        <item name="colorOnSurface">@color/midnight_on_surface</item>
+        <item name="colorSurfaceVariant">@color/midnight_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/midnight_on_surface_variant</item>
+        <item name="colorError">@color/midnight_error</item>
+        <item name="android:windowBackground">@color/midnight_background</item>
+        <item name="android:statusBarColor">@color/midnight_background</item>
+        <item name="android:navigationBarColor">@color/midnight_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.BearNest.Forest" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/forest_primary</item>
+        <item name="colorOnPrimary">@color/forest_on_primary</item>
+        <item name="colorSecondary">@color/forest_secondary</item>
+        <item name="android:colorBackground">@color/forest_background</item>
+        <item name="colorSurface">@color/forest_surface</item>
+        <item name="colorOnSurface">@color/forest_on_surface</item>
+        <item name="colorSurfaceVariant">@color/forest_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/forest_on_surface_variant</item>
+        <item name="colorError">@color/forest_error</item>
+        <item name="android:windowBackground">@color/forest_background</item>
+        <item name="android:statusBarColor">@color/forest_background</item>
+        <item name="android:navigationBarColor">@color/forest_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.BearNest.Obsidian" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/obsidian_primary</item>
+        <item name="colorOnPrimary">@color/obsidian_on_primary</item>
+        <item name="colorSecondary">@color/obsidian_secondary</item>
+        <item name="android:colorBackground">@color/obsidian_background</item>
+        <item name="colorSurface">@color/obsidian_surface</item>
+        <item name="colorOnSurface">@color/obsidian_on_surface</item>
+        <item name="colorSurfaceVariant">@color/obsidian_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/obsidian_on_surface_variant</item>
+        <item name="colorError">@color/obsidian_error</item>
+        <item name="android:windowBackground">@color/obsidian_background</item>
+        <item name="android:statusBarColor">@color/obsidian_background</item>
+        <item name="android:navigationBarColor">@color/obsidian_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+</resources>
