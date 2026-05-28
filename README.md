@@ -1,5 +1,6 @@
+ # <img width="56" height="56" alt="image" src="https://github.com/user-attachments/assets/b9abbba7-79a0-4003-8d9c-73037b3be02c" />
  
-# 🐻 BearNest VPN
+#   BearNest VPN
 
 > **Private Android VPN client** powered by Xray-core and HevSocks5Tunnel.  
 > Supports VLESS · VMess · Trojan · Shadowsocks protocols with subscription management.
@@ -11,8 +12,7 @@
 <!-- TODO: add screenshots after first release -->
 _Coming soon_
 
----
-
+--- 
 ## ✨ Features
 
 | Feature | Description |
@@ -27,8 +27,7 @@ _Coming soon_
 | **Multilingual** | English · Russian |
 | **Dark theme** | Material You, dark theme by default |
 
----
-
+--- 
 ## 🏗️ Architecture
 
 ```
@@ -73,7 +72,7 @@ BearNestAndroid/
 ```
 
 ---
-
+ 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
@@ -90,7 +89,7 @@ BearNestAndroid/
 | Build System | Gradle KTS |
 
 ---
-
+ 
 ## ⚙️ Build & Run
 
 ### Requirements
@@ -159,7 +158,7 @@ storeFile=../keystore/bearnest.jks
 - [ ] Roadmap - Roadmap
 
 ---
-
+ 
 ## 📜 License
 
 Private repository. All rights reserved © 2026 BearNest.
