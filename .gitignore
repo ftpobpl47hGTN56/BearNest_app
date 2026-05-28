@@ -1,0 +1,66 @@
+# ==========================
+# Android / Gradle
+# ==========================
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ==========================
+# App-module build artifacts
+# ==========================
+app/build/
+app/release/
+
+# ==========================
+# Signing & secrets (ВАЖНО: никогда не коммитить!)
+# ==========================
+*.jks
+*.keystore
+key.properties
+keystore.properties
+signing.properties
+
+# ==========================
+# ProGuard mapping (генерируется при сборке)
+# ==========================
+app/src/main/proguard-rules-generated.pro
+mapping.txt
+
+# ==========================
+# IDE — IntelliJ / Android Studio
+# ==========================
+*.iws
+out/
+.idea/
+*.class
+
+# ==========================
+# OS
+# ==========================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# ==========================
+# Gradle wrapper (оставляем gradlew и gradlew.bat,
+# но игнорируем кэш)
+# ==========================
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# ==========================
+# Logs
+# ==========================
+*.log
