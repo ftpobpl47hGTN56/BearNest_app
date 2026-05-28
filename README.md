@@ -7,7 +7,7 @@
 
 ---
 
-## 📱 Screenshots
+## 📱 BearNest interface 
 
   <table><tr>
     <td><img src="screenshots/photo_1_2026-05-28_18-43-38.jpg" width="160" alt="Home Screen"/></td>
