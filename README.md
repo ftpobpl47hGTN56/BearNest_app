@@ -2,7 +2,7 @@
  
 #   BearNest VPN
 
-> **Private Android VPN client** powered by Xray-core and HevSocks5Tunnel.  
+> ** Android VPN client** powered by Xray-core and HevSocks5Tunnel.  
 > Supports VLESS · VMess · Trojan · Shadowsocks protocols with subscription management.
 
 ---
