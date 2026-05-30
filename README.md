@@ -169,7 +169,7 @@ storeFile=../keystore/bearnest.jks
  
 ## 📜 License
 
-Private repository. All rights reserved © 2026 BearNest.
+open source
 
 ---
  
