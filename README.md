@@ -17,8 +17,7 @@
   </tr></table>
 </p>
   
-<!-- TODO: add screenshots after first release -->
-_Coming soon_
+ 
 
 --- 
 ## ✨ Features
@@ -163,7 +162,7 @@ storeFile=../keystore/bearnest.jks
 ---
 
 ## 🗺️ Roadmap 
-- [ ] Roadmap - Roadmap
+- [ ]   -  
 
 ---
  
