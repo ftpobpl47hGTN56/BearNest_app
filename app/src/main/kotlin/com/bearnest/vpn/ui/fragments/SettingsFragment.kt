@@ -2,6 +2,8 @@ package com.bearnest.vpn.ui.fragments
 
 import android.content.Context
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -65,6 +67,7 @@ class SettingsFragment : Fragment() {
                             "midnight" -> R.id.chip_midnight
                             "forest"   -> R.id.chip_forest
                             "obsidian" -> R.id.chip_obsidian
+                            "snow"     -> R.id.chip_snow
                             else       -> R.id.chip_catppuccin
                         }
                         if (binding.chipGroupTheme.checkedChipId != chipId)
@@ -84,16 +87,17 @@ class SettingsFragment : Fragment() {
                     vm.subUrl.collect { url ->
                         val et = binding.etSubUrl
                         if (et.text.toString() != url) et.setText(url)
+                        updateLoadButton()
                     }
                 }
 
                 launch {
                     vm.loading.collect { loading ->
-                        binding.btnLoadSub.isEnabled = !loading && !binding.etSubUrl.text.isNullOrBlank()
                         binding.btnLoadSub.text = if (loading)
                             getString(R.string.loading)
                         else
                             getString(R.string.load_subscription)
+                        updateLoadButton()
                     }
                 }
             }
@@ -106,6 +110,7 @@ class SettingsFragment : Fragment() {
                 R.id.chip_midnight -> "midnight"
                 R.id.chip_forest   -> "forest"
                 R.id.chip_obsidian -> "obsidian"
+                R.id.chip_snow     -> "snow"
                 else               -> "catppuccin"
             }
             if (vm.theme.value != key) {
@@ -124,6 +129,13 @@ class SettingsFragment : Fragment() {
             }
         }
 
+        // [Fixed] TextWatcher — обновляет кнопку при каждом изменении текста
+        binding.etSubUrl.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) { updateLoadButton() }
+        })
+
         binding.btnLoadSub.setOnClickListener {
             val url = binding.etSubUrl.text?.toString()?.trim() ?: return@setOnClickListener
             if (url.isNotBlank()) vm.loadSubscription(url)
@@ -138,6 +150,12 @@ class SettingsFragment : Fragment() {
                 .addToBackStack("split_tunnel")
                 .commit()
         }
+    }
+
+    /** [Fixed] Единый метод обновления enabled-состояния кнопки загрузки */
+    private fun updateLoadButton() {
+        val b = _binding ?: return
+        b.btnLoadSub.isEnabled = !vm.loading.value && !b.etSubUrl.text.isNullOrBlank()
     }
 
     private fun prefs() =
