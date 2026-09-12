@@ -3,6 +3,7 @@ package com.bearnest.vpn.ui.fragments
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -55,12 +56,17 @@ class HomeFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Объединяем connected + loading в один коллектор чтобы обновления были синхронны
-                launch { vm.connected.collect { updateConnectState() } }
-                launch { vm.loading.collect   { updateConnectState() } }
+                launch { vm.connected.collect      { updateConnectState() } }
+                launch { vm.loading.collect        { updateConnectState() } }
                 launch { vm.currentServerFlow.collect { updateServerCard(it) } }
-                launch { vm.subInfo.collect   { updateSubCard(it) } }
+                launch { vm.subInfo.collect        { updateSubCard(it) } }
                 launch { vm.sessionStartMs.collect { startTimerIfNeeded(it) } }
+
+                // [Fixed] Наблюдаем реальный статус трафика через туннель
+                // null  = подключение идёт / отключено  → скрыть
+                // true  = трафик идёт нормально         → зелёный текст
+                // false = туннель есть, трафик не идёт  → оранжевое предупреждение
+                launch { vm.trafficOk.collect      { updateTrafficStatus(it) } }
             }
         }
     }
@@ -95,6 +101,37 @@ class HomeFragment : Fragment() {
         binding.cardStatus.visibility      = if (showStatus) View.VISIBLE else View.GONE
         binding.tvSessionTimer.visibility  = if (showStatus) View.VISIBLE else View.GONE
         binding.icChevron.visibility       = if (connected) View.INVISIBLE else View.VISIBLE
+
+        // Сбрасываем статус трафика при отключении
+        if (!connected) binding.tvTrafficStatus.visibility = View.GONE
+    }
+
+    // ── [Fixed] Статус реального трафика через туннель ────────────────────────
+
+    private fun updateTrafficStatus(ok: Boolean?) {
+        when (ok) {
+            null -> {
+                // Подключение только началось или отключились — скрываем
+                binding.tvTrafficStatus.visibility = View.GONE
+            }
+            true -> {
+                // Трафик идёт нормально
+                binding.tvTrafficStatus.visibility = View.VISIBLE
+                binding.tvTrafficStatus.text       = "✓ Traffic OK"
+                binding.tvTrafficStatus.setTextColor(
+                    requireContext().getColor(R.color.bear_green)
+                )
+            }
+            false -> {
+                // Туннель поднят, но реальный трафик НЕ проходит
+                // Сервер сломан / протокол заблокирован провайдером
+                binding.tvTrafficStatus.visibility = View.VISIBLE
+                binding.tvTrafficStatus.text       = "⚠ No traffic — server may be down"
+                binding.tvTrafficStatus.setTextColor(
+                    Color.parseColor("#FFA500") // оранжевый
+                )
+            }
+        }
     }
 
     // ── Карточка сервера ──────────────────────────────────────────────────────
@@ -132,7 +169,6 @@ class HomeFragment : Fragment() {
             val usageInt = (info.usagePercent * 100).toInt()
             binding.pbSubUsage.visibility = View.VISIBLE
             binding.pbSubUsage.progress   = usageInt
-            // setIndicatorColor принимает @ColorInt Int, не ColorStateList
             binding.pbSubUsage.setIndicatorColor(
                 if (info.usagePercent > 0.9f) requireContext().getColor(R.color.bear_red)
                 else requireContext().getColor(R.color.bear_blue)
