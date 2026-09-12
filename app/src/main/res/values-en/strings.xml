@@ -62,7 +62,7 @@
 
 
     <!-- App info (not translatable) -->
-    <string name="app_version" translatable="false">2.285.26</string>
+    <string name="app_version" translatable="false">3.12.26</string>
     <string name="engine_value" translatable="false">xray-core (XTLS/Xray-core)</string>
     <string name="protocols_value" translatable="false">VLESS · VMess · Trojan · Shadowsocks</string>
     <string name="reality_value" translatable="false">XTLS Vision + Reality</string>
