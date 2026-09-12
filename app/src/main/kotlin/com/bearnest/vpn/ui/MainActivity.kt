@@ -152,6 +152,7 @@ class MainActivity : AppCompatActivity() {
         "midnight" -> R.style.Theme_BearNest_Midnight
         "forest"   -> R.style.Theme_BearNest_Forest
         "obsidian" -> R.style.Theme_BearNest_Obsidian
+        "snow"     -> R.style.Theme_BearNest_Snow
         else       -> R.style.Theme_BearNest_Catppuccin
     }
 
