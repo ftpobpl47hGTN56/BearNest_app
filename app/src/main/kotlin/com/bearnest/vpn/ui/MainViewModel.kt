@@ -3,6 +3,7 @@ package com.bearnest.vpn.ui
 import android.app.Application
 import android.content.Intent
 import android.net.VpnService
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,6 +29,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val dao      = db.serverDao()
     private val settings = AppSettings(context)
     private val xray     = XrayManager(context, onLog = { _, msg -> addLog(msg) })
+
+    companion object { private const val TAG = "MainViewModel" }
 
     // ── State ──────────────────────────────────────────────────────────────────
 
@@ -76,6 +79,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _proxyInfo = MutableStateFlow("")
     val proxyInfo: StateFlow<String> = _proxyInfo.asStateFlow()
 
+    // ── [Fixed] Реальная проверка трафика ─────────────────────────────────────
+    // null  = проверка ещё не проводилась (только что подключились / отключены)
+    // true  = трафик идёт нормально
+    // false = туннель поднят, но реальный трафик НЕ проходит (сервер сломан)
+    private val _trafficOk = MutableStateFlow<Boolean?>(null)
+    val trafficOk: StateFlow<Boolean?> = _trafficOk.asStateFlow()
+
     // ── Логи ───────────────────────────────────────────────────────────────────
 
     data class LogEntry(val time: String, val level: Int, val msg: String)
@@ -115,9 +125,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { settings.selectedIdx.collect { _selectedIdx.value = it } }
         viewModelScope.launch { settings.vpnMode.collect     { _vpnMode.value = it } }
         viewModelScope.launch { BearVpnService.logFlow.collect { msg -> addLog(msg) } }
+        // Источник истины для состояния — connectedFlow сервиса.
+        // (Убрана привязка к _vpnMode: подключение всегда идёт через сервис/TUN.)
         viewModelScope.launch {
             BearVpnService.connectedFlow.collect { running ->
-                if (_vpnMode.value == "tun") _connected.value = running
+                _connected.value = running
             }
         }
         viewModelScope.launch {
@@ -232,25 +244,51 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             putExtra(BearVpnService.EXTRA_SERVER_JSON, server.toJson())
         }
         context.startForegroundService(serviceIntent)
-        _connected.value = true
-        _loading.value   = false
+        // Оптимистично показываем "подключено" — сервис почти сразу подтвердит это
+        // через connectedFlow. Если старт упадёт, стоп-путь сервиса выставит false.
+        _connected.value  = true
+        _loading.value    = false
+        _trafficOk.value  = null  // сбрасываем — идёт подключение
+
+        // [Fixed] Проверка реального трафика через туннель.
+        viewModelScope.launch(Dispatchers.IO) {
+            delay(3_000)
+            if (!_connected.value) return@launch
+            val socksPort = settings.proxyPort.first()
+            val ok = ServerPinger.checkRealTraffic(socksPort = socksPort)
+            _trafficOk.value = ok
+            if (!ok) {
+                addLog("[Warning] Tunnel is up but no real traffic detected — server may be down")
+            } else {
+                addLog("[Info] Traffic check passed — tunnel is working")
+            }
+        }
     }
 
     fun disconnect() {
-        when (_vpnMode.value) {
-            "proxy" -> {
-                xray.stop()
-                _connected.value = false
-                _proxyInfo.value = ""
-            }
-            "tun" -> {
-                val stopIntent = Intent(context, BearVpnService::class.java).apply {
-                    action = BearVpnService.ACTION_STOP
-                }
-                context.startService(stopIntent)
-                _connected.value = false
-            }
+        // ── ФИКС ГЛАВНЫЙ ─────────────────────────────────────────────────────
+        // connect() ВСЕГДА поднимает сервис через startTunMode(), какой бы режим
+        // ни был сохранён. Значит и останавливать нужно ВСЕГДА сам сервис — без
+        // разветвления по _vpnMode. Раньше при _vpnMode == "proxy" мы глушили
+        // пустой UI-XrayManager (controller == null → "xray stopped" вхолостую),
+        // а живое ядро в сервисе оставалось работать вечно. Это и был баг.
+        //
+        // 1) Прямой teardown в процессе — не зависит от доставки intent'ов
+        //    (на Tecno/HiOS stopService()/ACTION_STOP иногда молча дропаются).
+        BearVpnService.stopNow()
+        // 2) Страховка — штатная остановка сервиса.
+        try {
+            context.stopService(Intent(context, BearVpnService::class.java))
+        } catch (e: Exception) {
+            Log.w(TAG, "stopService: ${e.message}")
         }
+        // 3) На всякий случай глушим и локальный xray (no-op в TUN, актуально
+        //    только если когда-то вернётся отдельный proxy-режим).
+        try { xray.stop() } catch (_: Exception) {}
+        _proxyInfo.value = ""
+        _trafficOk.value = null
+        // _connected НЕ трогаем — его выставит connectedFlow сервиса после
+        // реальной остановки (единственный источник истины).
     }
 
     fun setVpnMode(mode: String) {
@@ -265,6 +303,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         super.onCleared()
-        if (_vpnMode.value == "proxy") xray.stop()
+        try { xray.stop() } catch (_: Exception) {}
     }
 }
