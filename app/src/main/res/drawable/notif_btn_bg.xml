@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [NotifButtons] Фон кнопки «Следующий» — полупрозрачный синий, читается и на светлой, и на тёмной шторке -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="16dp" />
+    <solid android:color="@color/notif_btn_fill" />
+</shape>

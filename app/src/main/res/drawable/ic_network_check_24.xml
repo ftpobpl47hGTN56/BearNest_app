@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Сигнальные дуги (вайфай-часть) — rotation="90" -->
+    <group
+        android:rotation="270"
+        android:pivotX="12"
+        android:pivotY="12">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M15.9 5.1L14.5 6.5c1.54 1.55 2.5 3.68 2.5 6.02 0 2.34-.96 4.48-2.5 6.02l1.4 1.4C17.79 18.16 19 15.22 19 12.02c0-3.2-1.21-6.14-3.1-8.92z"/>
+    </group>
+
+    <!-- Стрелка — rotation="-45" (левее), подберите угол под себя -->
+    <group
+        android:rotation="245"
+        android:pivotX="12"
+        android:pivotY="12">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M1 9l3 3 3-3-3-3-3 3zm10-7L9.59 3.41 13.17 7H3v2h10.17l-3.58 3.59L11 14l7-7-7-7z"/>
+    </group>
+
+</vector>

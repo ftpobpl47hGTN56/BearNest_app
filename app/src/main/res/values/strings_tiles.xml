@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [QuickTiles] Строки плиток в шторке и уведомления. Отдельный файл — не трогаем основной strings.xml. -->
+<resources>
+    <string name="tile_vpn_label">BearNest</string>
+    <string name="tile_server_label">Server</string>
+    <string name="tile_state_on">Connected</string>
+    <string name="tile_state_off">Off</string>
+    <string name="tile_pick_server">Choose server</string>
+
+    <string name="notif_connected">Connected: %1$s</string>
+    <string name="notif_switching">Switching to %1$s…</string>
+    <string name="notif_next_server">Next server</string>
+    <string name="notif_disconnected">Disconnected</string>
+    <string name="notif_close">Close</string>
+</resources>

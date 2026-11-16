@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [NotifButtons] Цвета кнопок уведомления — тёмная шторка -->
+<resources>
+    <color name="notif_btn_fill">#3389B4FA</color>
+    <color name="notif_btn_text">#A9C8FF</color>
+    <color name="notif_btn_stop_fill">#33F38BA8</color>
+    <color name="notif_btn_stop_text">#FFB3C4</color>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [QuickTiles] Русские строки плиток в шторке и уведомления. -->
+<resources>
+    <string name="tile_vpn_label">BearNest</string>
+    <string name="tile_server_label">Сервер</string>
+    <string name="tile_state_on">Подключено</string>
+    <string name="tile_state_off">Выключен</string>
+    <string name="tile_pick_server">Выбор сервера</string>
+
+    <string name="notif_connected">Подключено: %1$s</string>
+    <string name="notif_switching">Переключение на %1$s…</string>
+    <string name="notif_next_server">Следующий</string>
+    <string name="notif_disconnected">Отключено</string>
+    <string name="notif_close">Закрыть</string>
+</resources>

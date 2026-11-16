@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Акцентные цвета индикаторов (не зависят от темы) -->
+    <color name="bear_green">#1FA215</color>
+    <color name="bear_red">#E6114D</color>
+    <color name="bear_yellow">#FB8C00</color>
+    <color name="bear_blue">#2070F4</color>
+    <color name="bear_mauve">#CBA6F7</color>
+    <color name="bear_peach">#FAB387</color>
+
+    <!-- Catppuccin -->
+    <color name="catppuccin_primary">#89B4FA</color>
+    <color name="catppuccin_on_primary">#1E1E2E</color>
+    <color name="catppuccin_secondary">#CBA6F7</color>
+    <color name="catppuccin_background">#1E1E2E</color>
+    <color name="catppuccin_surface">#313244</color>
+    <color name="catppuccin_on_surface">#CDD6F4</color>
+    <color name="catppuccin_surface_variant">#45475A</color>
+    <color name="catppuccin_on_surface_variant">#A6ADC8</color>
+    <color name="catppuccin_error">#F38BA8</color>
+
+    <!-- Midnight -->
+    <color name="midnight_primary">#58A6FF</color>
+    <color name="midnight_on_primary">#0D1117</color>
+    <color name="midnight_secondary">#1F6FEB</color>
+    <color name="midnight_background">#0D1117</color>
+    <color name="midnight_surface">#161B22</color>
+    <color name="midnight_on_surface">#E6EDF3</color>
+    <color name="midnight_surface_variant">#21262D</color>
+    <color name="midnight_on_surface_variant">#8B949E</color>
+    <color name="midnight_error">#F85149</color>
+
+    <!-- Forest -->
+    <color name="forest_primary">#3FB950</color>
+    <color name="forest_on_primary">#0D1F0F</color>
+    <color name="forest_secondary">#238636</color>
+    <color name="forest_background">#0D1117</color>
+    <color name="forest_surface">#132217</color>
+    <color name="forest_on_surface">#CDD6F4</color>
+    <color name="forest_surface_variant">#1B3A22</color>
+    <color name="forest_on_surface_variant">#7EBF8E</color>
+    <color name="forest_error">#F85149</color>
+
+    <!-- Obsidian -->
+    <color name="obsidian_primary">#BB86FC</color>
+    <color name="obsidian_on_primary">#141414</color>
+    <color name="obsidian_secondary">#6200EE</color>
+    <color name="obsidian_background">#141414</color>
+    <color name="obsidian_surface">#1E1E1E</color>
+    <color name="obsidian_on_surface">#E1E1E1</color>
+    <color name="obsidian_surface_variant">#2C2C2C</color>
+    <color name="obsidian_on_surface_variant">#9E9E9E</color>
+    <color name="obsidian_error">#CF6679</color>
+
+    <!-- Snow ─────────────────────────────────────────────────────────────
+          colorPrimary    = синий фон кнопок
+          colorOnPrimary  = белый текст НА кнопках
+          colorSurface    = белый фон экранов/карточек
+          colorOnSurface  = тёмный текст НА экранах (заголовки, метки)
+     ──────────────────────────────────────────────────────────────────── -->
+    <color name="snow_primary">#5C7CFA</color>
+    <color name="snow_on_primary">#FFFFFF</color>
+    <color name="snow_secondary">#748FFC</color>
+    <color name="snow_background">#F8F9FA</color>
+    <color name="snow_surface">#FFFFFF</color>
+    <color name="snow_on_surface">#212529</color>
+    <color name="snow_surface_variant">#E9ECEF</color>
+    <color name="snow_on_surface_variant">#495057</color>
+    <color name="snow_error">#FA5252</color>
+
+    <!-- Snow — акцентные цвета пинга (читаемы на белом фоне) -->
+    <color name="snow_ping_good">#2B8A3E</color>
+    <color name="snow_ping_mid">#E67700</color>
+    <color name="snow_ping_bad">#C92A2A</color>
+    <color name="snow_icon_tint">#343A40</color>
+    <color name="snow_on_surface_strong">#212529</color>
+</resources>
