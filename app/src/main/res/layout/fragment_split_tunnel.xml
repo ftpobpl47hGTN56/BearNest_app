@@ -197,6 +197,25 @@
 
             <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
+            <!-- Лупа: поиск по кастомным доменам -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_search"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:hint="@string/bypass_search_hint"
+                app:startIconDrawable="@drawable/ic_search_24"
+                app:startIconTint="?attr/colorOnSurfaceVariant">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text|textNoSuggestions"
+                    android:maxLines="1"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Секция кастомных доменов: RecyclerView показывает только
                  домены, добавленные вручную (не пресеты). -->
             <TextView
@@ -206,7 +225,7 @@
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorPrimary"
                 android:paddingHorizontal="16dp"
-                android:paddingTop="12dp"
+                android:paddingTop="4dp"
                 android:paddingBottom="4dp"/>
 
             <!-- Подсказка — видна когда список пуст -->

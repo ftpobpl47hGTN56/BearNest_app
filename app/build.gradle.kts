@@ -12,8 +12,8 @@ android {
         applicationId             = "com.bearnest.vpn"
         minSdk                    = 26
         targetSdk                 = 35
-        versionCode               = 2
-        versionName               = "3.30.26"
+        versionCode               = 3
+        versionName               = "3.30.27"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters += setOf("arm64-v8a")
@@ -42,7 +42,7 @@ android {
         }
     }
 
-    // ── Переименование APK: BearNest-3.30.26-release.apk ────────────────────
+    // ── Переименование APK: BearNest-3.30.27-release.apk ────────────────────
     applicationVariants.all {
         val variant = this
         outputs.all {
