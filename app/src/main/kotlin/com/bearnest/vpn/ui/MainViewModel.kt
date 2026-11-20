@@ -15,6 +15,7 @@ import com.bearnest.vpn.core.XrayManager
 import com.bearnest.vpn.data.AppDatabase
 import com.bearnest.vpn.data.AppSettings
 import com.bearnest.vpn.data.ServerEntity
+import com.bearnest.vpn.data.SubscriptionEntity
 import com.bearnest.vpn.model.ServerConfig
 import com.bearnest.vpn.model.SubscriptionInfo
 import com.bearnest.vpn.vpn.BearVpnService
@@ -22,16 +23,28 @@ import com.bearnest.vpn.vpn.VpnController
 import com.bearnest.vpn.vpn.toJson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.net.URI
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val context  = app.applicationContext
     private val db       = AppDatabase.getInstance(context)
     private val dao      = db.serverDao()
+    private val subDao   = db.subscriptionDao()
     private val settings = AppSettings(context)
     private val xray     = XrayManager(context, onLog = { _, msg -> addLog(msg) })
 
-    companion object { private const val TAG = "MainViewModel" }
+    companion object {
+        private const val TAG = "MainViewModel"
+
+        // Режимы сортировки серверов (порт sortField из Tauri main.js)
+        const val SORT_DEFAULT = "default"
+        const val SORT_NAME    = "name"
+        const val SORT_PING    = "ping"
+
+        private const val SUB_ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
+    }
 
     // ── State ──────────────────────────────────────────────────────────────────
 
@@ -43,8 +56,69 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _servers = MutableStateFlow<List<ServerConfig>>(emptyList())
     val servers: StateFlow<List<ServerConfig>> = _servers.asStateFlow()
 
+    /** Подписки (порт subs[] из Tauri main.js). */
+    private val _subscriptions = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
+    val subscriptions: StateFlow<List<SubscriptionEntity>> = _subscriptions.asStateFlow()
+
     private val _selectedIdx = MutableStateFlow(0)
     val selectedIdx: StateFlow<Int> = _selectedIdx.asStateFlow()
+
+    /** Ключ выбранного сервера "subId::name" (порт last_server из Tauri). */
+    private val _selectedKey = MutableStateFlow("")
+    val selectedKey: StateFlow<String> = _selectedKey.asStateFlow()
+
+    // ── Сортировка списка серверов ───────────────────────────────────────────
+
+    private val _sortMode = MutableStateFlow(SORT_DEFAULT)
+    val sortMode: StateFlow<String> = _sortMode.asStateFlow()
+
+    /** 1 = по возрастанию, -1 = по убыванию. */
+    private val _sortDir = MutableStateFlow(1)
+    val sortDir: StateFlow<Int> = _sortDir.asStateFlow()
+
+    fun setSortMode(mode: String) {
+        _sortMode.value = mode
+        viewModelScope.launch { settings.setSortMode(mode) }
+    }
+
+    fun setSortDir(dir: Int) {
+        val fixed = if (dir >= 0) 1 else -1
+        _sortDir.value = fixed
+        viewModelScope.launch { settings.setSortDir(fixed) }
+    }
+
+    /**
+     * Клик по кнопке сортировки: новый режим → dir=1;
+     * повторный клик по тому же режиму → flip направления (как в Tauri).
+     */
+    fun cycleSort(mode: String) {
+        if (_sortMode.value == mode) setSortDir(-_sortDir.value)
+        else { setSortMode(mode); setSortDir(1) }
+    }
+
+    /**
+     * Сортировка внутри группы подписки (порт sortedServers() из Tauri):
+     * 1. Избранные всегда наверху своей группы.
+     * 2. ping: необмеренные/мёртвые (pingMs < 0) всегда в конце,
+     *    независимо от направления сортировки.
+     */
+    fun sortedServers(list: List<ServerConfig>): List<ServerConfig> {
+        val dir = _sortDir.value
+        val sorter: (List<ServerConfig>) -> List<ServerConfig> = { l ->
+            when (_sortMode.value) {
+                SORT_NAME -> l.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                    .let { if (dir > 0) it else it.reversed() }
+                SORT_PING -> {
+                    val (alive, dead) = l.partition { it.pingMs >= 0 }
+                    (if (dir > 0) alive.sortedBy { it.pingMs }
+                     else alive.sortedByDescending { it.pingMs }) + dead
+                }
+                else -> l   // default — исходный порядок из подписки (sortOrder)
+            }
+        }
+        val (fav, rest) = list.partition { it.isFavorite }
+        return sorter(fav) + sorter(rest)
+    }
 
     /** Комбинированный flow — текущий сервер. Удобен для наблюдения из фрагментов. */
     val currentServerFlow: StateFlow<ServerConfig?> =
@@ -117,63 +191,365 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // ── Init ───────────────────────────────────────────────────────────────────
 
     init {
+        // Серверы + восстановление выбора/сортировки + миграция legacy-подписки.
+        // Чтение настроек и миграция идут ПЕРЕД collect, чтобы reconcileSelection
+        // сразу видел сохранённый ключ и привязанную подписку.
         viewModelScope.launch {
+            _selectedKey.value = settings.selectedKey.first()
+            _sortMode.value    = settings.sortMode.first()
+            _sortDir.value     = settings.sortDir.first()
+            try { migrateLegacySingleSub() } catch (e: Exception) {
+                Log.w(TAG, "legacy migration: ${e.message}")
+            }
             dao.observeAll().collect { entities ->
-                _servers.value = entities.map { it.toServerConfig() }
+                val list = entities.map { it.toServerConfig() }
+                _servers.value = list
+                reconcileSelection(list)
+            }
+        }
+        // Подписки
+        viewModelScope.launch {
+            subDao.observeAll().collect { _subscriptions.value = it }
+        }
+        // subInfo = инфо подписки выбранного сервера (fallback — первая подписка)
+        viewModelScope.launch {
+            combine(_subscriptions, _selectedKey) { subs, key ->
+                val subId = key.substringBefore("::", "")
+                subs.firstOrNull { it.id == subId } ?: subs.firstOrNull()
+            }.collect { sub ->
+                if (sub != null) {
+                    _subInfo.value = SubscriptionInfo(
+                        title      = sub.infoTitle.ifEmpty { sub.name },
+                        upload     = sub.upload,
+                        download   = sub.download,
+                        total      = sub.total,
+                        expireUnix = sub.expireUnix
+                    )
+                }
             }
         }
         viewModelScope.launch { settings.subUrl.collect      { _subUrl.value = it } }
-        viewModelScope.launch { settings.selectedIdx.collect { _selectedIdx.value = it } }
         viewModelScope.launch { settings.vpnMode.collect     { _vpnMode.value = it } }
         viewModelScope.launch { BearVpnService.logFlow.collect { msg -> addLog(msg) } }
         // Источник истины для состояния — connectedFlow сервиса.
-        // (Убрана привязка к _vpnMode: подключение всегда идёт через сервис/TUN.)
         viewModelScope.launch {
             BearVpnService.connectedFlow.collect { running ->
                 _connected.value = running
             }
         }
-        viewModelScope.launch {
-            combine(
-                settings.subTitle, settings.subUpload, settings.subDownload,
-                settings.subTotal, settings.subExpire
-            ) { title, upload, download, total, expire ->
-                SubscriptionInfo(title = title, upload = upload, download = download,
-                    total = total, expireUnix = expire)
-            }.collect { info -> if (info.title.isNotEmpty()) _subInfo.value = info }
+    }
+
+    /** Поддерживает selectedIdx/selectedKey согласованными при изменениях списка. */
+    private suspend fun reconcileSelection(list: List<ServerConfig>) {
+        if (list.isEmpty()) { _selectedIdx.value = 0; return }
+        val key = _selectedKey.value
+        if (key.isNotEmpty()) {
+            var idx = list.indexOfFirst { it.selectionKey == key }
+            if (idx < 0 && "::" in key) {
+                // fallback: только имя (как restoreSelection в Tauri)
+                val name = key.substringAfter("::")
+                idx = list.indexOfFirst { it.name == name }
+            }
+            if (idx >= 0) {
+                _selectedIdx.value = idx
+                settings.setSelectedIdx(idx)
+            } else {
+                // Выбранный сервер исчез (например, удалили подписку) — берём первый
+                val first = list.first()
+                _selectedIdx.value = 0
+                _selectedKey.value = first.selectionKey
+                settings.setSelectedKey(first.selectionKey)
+                settings.setSelectedIdx(0)
+            }
+        } else {
+            // Legacy: мигрируем selectedIdx → selectedKey
+            val idx = settings.selectedIdx.first().coerceIn(0, list.size - 1)
+            _selectedIdx.value = idx
+            val k = list[idx].selectionKey
+            _selectedKey.value = k
+            settings.setSelectedKey(k)
         }
     }
 
-    // ── Подписка ───────────────────────────────────────────────────────────────
+    // ── Подписки: миграция legacy (single-sub → первая подписка) ─────────────
 
-    fun loadSubscription(url: String) {
+    private val legacyMigrated = AtomicBoolean(false)
+
+    /**
+     * Порт loadSubs() из Tauri: если таблица подписок пуста, но есть старые
+     * sub_url + серверы (после миграции БД v1→v2) — создаём первую подписку
+     * и перепривязываем к ней "осиротевшие" серверы.
+     */
+    private suspend fun migrateLegacySingleSub() {
+        if (!legacyMigrated.compareAndSet(false, true)) return
+        val subs = subDao.getAll()
+        if (subs.isNotEmpty()) {
+            if (dao.countUnassigned() > 0) {
+                dao.reassignServers("", subs.first().id)
+                dao.reassignServers("legacy", subs.first().id)
+            }
+            return
+        }
+        val url = settings.subUrl.first()
+        if (url.isEmpty()) return   // свежая установка — нечего мигрировать
+        val title = settings.subTitle.first()
+        val sub = SubscriptionEntity(
+            id           = newSubId(),
+            name         = title.ifEmpty { hostFromUrl(url).ifEmpty { url } },
+            url          = url,
+            infoTitle    = title,
+            upload       = settings.subUpload.first(),
+            download     = settings.subDownload.first(),
+            total        = settings.subTotal.first(),
+            expireUnix   = settings.subExpire.first(),
+            sortOrder    = 0,
+            lastUpdateMs = System.currentTimeMillis()
+        )
+        subDao.insert(sub)
+        dao.reassignServers("", sub.id)
+        dao.reassignServers("legacy", sub.id)
+        addLog("[Info] Migrated legacy subscription → ${sub.name}")
+    }
+
+    // ── Подписки: загрузка / обновление (порт doLoad/refreshSub из Tauri) ────
+
+    private data class FetchedSub(val servers: List<ServerConfig>, val info: SubscriptionInfo)
+
+    private suspend fun fetchSubscription(url: String): FetchedSub {
+        val proxyPort = if (_connected.value && _vpnMode.value == "proxy")
+            settings.proxyPort.first() else 0
+        val (content, info) = SubscriptionParser.download(url, proxyPort)
+        val parsed = SubscriptionParser.parse(content)
+        if (parsed.isEmpty())
+            throw IllegalStateException(context.getString(R.string.error_no_servers_found))
+        return FetchedSub(parsed, info)
+    }
+
+    /**
+     * Главная точка входа (имя сохранено для совместимости со старым UI).
+     * Как doLoad() в Tauri: если URL уже есть среди подписок — обновляем её,
+     * иначе создаём новую. При ошибке загрузки НОВОЙ подписки она не создаётся
+     * (rollback, как в Tauri).
+     */
+    fun loadSubscription(url: String) = addOrRefreshSubscription(url)
+
+    fun addOrRefreshSubscription(url: String) {
+        val trimmed = url.trim()
+        if (trimmed.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             _loading.value = true
             _error.value   = null
             try {
-                val proxyPort = if (_connected.value && _vpnMode.value == "proxy")
-                    settings.proxyPort.first() else 0
-                val (content, info) = SubscriptionParser.download(url, proxyPort)
-                val parsed = SubscriptionParser.parse(content)
-                if (parsed.isEmpty()) {
-                    _error.value = context.getString(R.string.error_no_servers_found)
-                    return@launch
+                val existing = subDao.getAll().firstOrNull { it.url == trimmed }
+                if (existing != null) {
+                    refreshSubscriptionInternal(existing)
+                    addLog("[Info] Subscription refreshed: ${existing.name}")
+                } else {
+                    val fetched = fetchSubscription(trimmed)
+                    val sub = SubscriptionEntity(
+                        id           = newSubId(),
+                        name         = fetched.info.title.ifEmpty {
+                            hostFromUrl(trimmed).ifEmpty { trimmed }
+                        },
+                        url          = trimmed,
+                        infoTitle    = fetched.info.title,
+                        upload       = fetched.info.upload,
+                        download     = fetched.info.download,
+                        total        = fetched.info.total,
+                        expireUnix   = fetched.info.expireUnix,
+                        sortOrder    = (subDao.getAll().maxOfOrNull { it.sortOrder } ?: -1) + 1,
+                        lastUpdateMs = System.currentTimeMillis()
+                    )
+                    subDao.insert(sub)
+                    dao.insertAll(fetched.servers.mapIndexed { i, cfg ->
+                        ServerEntity.fromServerConfig(cfg, sortOrder = i, subscriptionId = sub.id)
+                    })
+                    syncLegacySubUrl()
+                    addLog("[Info] Subscription added: ${sub.name} (${fetched.servers.size} servers)")
                 }
-                val entities = parsed.mapIndexed { i, cfg ->
-                    ServerEntity.fromServerConfig(cfg, sortOrder = i)
-                }
-                dao.deleteAll()
-                dao.insertAll(entities)
-                settings.setSubUrl(url)
-                settings.setSubInfo(info)
-                settings.setSelectedIdx(0)
-                _subInfo.value = info
             } catch (e: Exception) {
                 _error.value = context.getString(R.string.error_loading_prefix, e.message ?: "")
+                addLog("[Error] Subscription load failed: ${e.message}")
             } finally {
                 _loading.value = false
             }
         }
+    }
+
+    /** Обновить одну подписку (кнопка refresh в заголовке группы). */
+    fun refreshSubscription(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _loading.value = true
+            _error.value   = null
+            try {
+                val sub = subDao.getById(id)
+                if (sub != null) {
+                    refreshSubscriptionInternal(sub)
+                    addLog("[Info] Subscription refreshed: ${sub.name}")
+                }
+            } catch (e: Exception) {
+                _error.value = context.getString(R.string.error_loading_prefix, e.message ?: "")
+                addLog("[Error] Subscription refresh failed: ${e.message}")
+            } finally {
+                _loading.value = false
+            }
+        }
+    }
+
+    /** Обновить все подписки разом. Ошибка показывается, если не обновилась НИ ОДНА. */
+    fun refreshAllSubscriptions() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val subs = subDao.getAll()
+            if (subs.isEmpty()) return@launch
+            _loading.value = true
+            _error.value   = null
+            var ok = 0
+            var fail = 0
+            var lastError: String? = null
+            subs.forEach { sub ->
+                try {
+                    refreshSubscriptionInternal(sub)
+                    ok++
+                } catch (e: Exception) {
+                    fail++
+                    lastError = e.message
+                    addLog("[Warning] Refresh failed for ${sub.name}: ${e.message}")
+                }
+            }
+            if (ok == 0 && fail > 0) {
+                _error.value = context.getString(R.string.error_loading_prefix, lastError ?: "")
+            }
+            addLog("[Info] Refresh all: $ok ok, $fail failed")
+            _loading.value = false
+        }
+    }
+
+    /**
+     * Порт refreshSub() из Tauri: перекачивает серверы подписки.
+     * Избранное и последний пинг сохраняются по имени сервера.
+     */
+    private suspend fun refreshSubscriptionInternal(sub: SubscriptionEntity) {
+        val fetched = fetchSubscription(sub.url)
+        val old     = dao.getBySubscription(sub.id)
+        val favByName  = old.filter { it.isFavorite }.map { it.name }.toSet()
+        val pingByName = old.associate { it.name to it.pingMs }
+        dao.deleteBySubscription(sub.id)
+        dao.insertAll(fetched.servers.mapIndexed { i, cfg ->
+            ServerEntity.fromServerConfig(
+                cfg,
+                sortOrder      = i,
+                subscriptionId = sub.id,
+                isFavorite     = cfg.name in favByName
+            ).copy(pingMs = pingByName[cfg.name] ?: -1L)
+        })
+        subDao.insert(sub.copy(
+            name         = fetched.info.title.ifEmpty { sub.name },
+            infoTitle    = fetched.info.title,
+            upload       = fetched.info.upload,
+            download     = fetched.info.download,
+            total        = fetched.info.total,
+            expireUnix   = fetched.info.expireUnix,
+            lastUpdateMs = System.currentTimeMillis()
+        ))
+    }
+
+    /**
+     * Порт cloneSub() из Tauri: копия подписки со всеми серверами.
+     * Имя: "Name — копия", при повторе "Name — копия 2" и т.д.
+     * Пинги сбрасываются (-1), копия встаёт сразу после оригинала.
+     */
+    fun cloneSubscription(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val orig = subDao.getById(id) ?: return@launch
+            val suffix = copySuffix()
+            val existingNames = subDao.getAll().map { it.name }.toSet()
+            var copyName = "${orig.name} — $suffix"
+            var n = 2
+            while (copyName in existingNames) { copyName = "${orig.name} — $suffix $n"; n++ }
+            val clone = SubscriptionEntity(
+                id           = newSubId(),
+                name         = copyName,
+                url          = orig.url,
+                infoTitle    = orig.infoTitle,
+                upload       = orig.upload,
+                download     = orig.download,
+                total        = orig.total,
+                expireUnix   = orig.expireUnix,
+                sortOrder    = orig.sortOrder + 1,   // сразу после оригинала
+                lastUpdateMs = System.currentTimeMillis()
+            )
+            subDao.insert(clone)
+            val servers = dao.getBySubscription(orig.id)
+            dao.insertAll(servers.map { it.copy(id = 0, subscriptionId = clone.id, pingMs = -1L) })
+            addLog("[Info] Subscription cloned: $copyName")
+        }
+    }
+
+    /**
+     * Порт deleteSub() из Tauri: удаляет подписку и её серверы.
+     * Если выбранный сервер был в ней — выбор сбрасывается
+     * (reconcileSelection переведёт на первый доступный).
+     */
+    fun deleteSubscription(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteBySubscription(id)
+            subDao.deleteById(id)
+            if (_selectedKey.value.startsWith("$id::")) {
+                _selectedKey.value = ""
+                settings.setSelectedKey("")
+            }
+            syncLegacySubUrl()
+            addLog("[Info] Subscription deleted")
+        }
+    }
+
+    /** Свернуть/развернуть группу подписки в списке серверов. */
+    fun toggleCollapsed(id: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val sub = subDao.getById(id) ?: return@launch
+            subDao.update(sub.copy(collapsed = !sub.collapsed))
+        }
+    }
+
+    /** Переименовать подписку вручную. */
+    fun renameSubscription(id: String, newName: String) {
+        val name = newName.trim()
+        if (name.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val sub = subDao.getById(id) ?: return@launch
+            subDao.update(sub.copy(name = name))
+        }
+    }
+
+    /** Избранное: сервер поднимается наверх своей группы. */
+    fun toggleFavorite(server: ServerConfig) {
+        if (server.dbId <= 0) return
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.setFavorite(server.dbId, !server.isFavorite)
+        }
+    }
+
+    // ── Подписки: helpers ─────────────────────────────────────────────────────
+
+    /** Порт newSubId() из Tauri main.js: "sub_<ts36>_<rand5>". */
+    private fun newSubId(): String {
+        val ts   = System.currentTimeMillis().toString(36)
+        val rand = (1..5).map { SUB_ID_ALPHABET.random() }.joinToString("")
+        return "sub_${ts}_$rand"
+    }
+
+    /** Порт hostFromUrl() из Tauri main.js. */
+    private fun hostFromUrl(url: String): String = try {
+        URI(url).host ?: ""
+    } catch (_: Exception) { "" }
+
+    /** "копия"/"copy" — суффикс имени клона (порт I18N.t("SubCopy")). */
+    private fun copySuffix(): String =
+        if (language.value.startsWith("en")) "copy" else "копия"
+
+    /** Совместимость со старым UI: sub_url всегда указывает на первую подписку. */
+    private suspend fun syncLegacySubUrl() {
+        settings.setSubUrl(subDao.getAll().firstOrNull()?.url ?: "")
     }
 
     // ── Ping ───────────────────────────────────────────────────────────────────
@@ -187,37 +563,48 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 _pingProgress.value = idx + 1
             }
             _pingProgress.value = -1
-            val dbItems = dao.getAll()
-            updated.forEachIndexed { i, cfg ->
-                if (i < dbItems.size) dao.updatePing(dbItems[i].id, cfg.pingMs)
+            updated.forEach { cfg ->
+                if (cfg.dbId > 0) dao.updatePing(cfg.dbId, cfg.pingMs)
             }
         }
     }
 
     fun autoSelectBest() {
         viewModelScope.launch {
-            val best = ServerPinger.findBest(_servers.value)
-            if (best != null) {
-                val idx = _servers.value.indexOf(best)
-                if (idx >= 0) selectServer(idx)
-            }
+            ServerPinger.findBest(_servers.value)?.let { selectServerByKey(it.selectionKey) }
         }
     }
 
     // ── Выбор сервера ─────────────────────────────────────────────────────────
 
-    fun selectServer(idx: Int) {
+    /**
+     * Выбор по ключу "subId::name" (порт last_server из Tauri main.js).
+     * selectedIdx сохраняется для обратной совместимости и VpnController.
+     */
+    fun selectServerByKey(key: String) {
         viewModelScope.launch {
-            val changed = idx != _selectedIdx.value
-            _selectedIdx.value = idx
-            if (changed && BearVpnService.isActive()) {
-                // [QuickTiles] VPN включён — сразу переключаемся на новый сервер
-                // (так же, как из плитки в шторке). selectAndSwitch сам сохранит индекс.
-                _trafficOk.value = null
-                VpnController.selectAndSwitch(context, idx, connectIfStopped = false)
-            } else {
-                settings.setSelectedIdx(idx)
-            }
+            _selectedKey.value = key
+            settings.setSelectedKey(key)
+            val idx = _servers.value.indexOfFirst { it.selectionKey == key }
+            if (idx >= 0) applySelectedIdx(idx)
+        }
+    }
+
+    fun selectServer(idx: Int) {
+        val cfg = _servers.value.getOrNull(idx) ?: return
+        selectServerByKey(cfg.selectionKey)
+    }
+
+    private suspend fun applySelectedIdx(idx: Int) {
+        val changed = idx != _selectedIdx.value
+        _selectedIdx.value = idx
+        if (changed && BearVpnService.isActive()) {
+            // [QuickTiles] VPN включён — сразу переключаемся на новый сервер
+            // (так же, как из плитки в шторке). selectAndSwitch сам сохранит индекс.
+            _trafficOk.value = null
+            VpnController.selectAndSwitch(context, idx, connectIfStopped = false)
+        } else {
+            settings.setSelectedIdx(idx)
         }
     }
 

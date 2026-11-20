@@ -31,6 +31,14 @@ class AppSettings(private val context: Context) {
         val KEY_AUTOSTART     = booleanPreferencesKey("autostart")
         val KEY_WATCHDOG      = booleanPreferencesKey("watchdog")
 
+        // ── Мультиподписка / сортировка ─────────────────────────────────
+        /** Ключ выбранного сервера вида "subId::name" (порт last_server из Tauri). */
+        val KEY_SELECTED_KEY  = stringPreferencesKey("selected_server_key")
+        /** Режим сортировки серверов: "default" | "name" | "ping". */
+        val KEY_SORT_MODE     = stringPreferencesKey("server_sort_mode")
+        /** Направление сортировки: 1 = по возрастанию, -1 = по убыванию. */
+        val KEY_SORT_DIR      = intPreferencesKey("server_sort_dir")
+
         // ── Split Tunneling ───────────────────────────────────────────
         val KEY_BYPASS_DOMAINS_JSON  = stringPreferencesKey("bypass_domains_json")
         val KEY_SPLIT_TUNNEL_ENABLED = booleanPreferencesKey("split_tunnel_enabled")
@@ -38,6 +46,7 @@ class AppSettings(private val context: Context) {
         const val DEFAULT_PROXY_PORT = 10808
         const val DEFAULT_HTTP_PORT  = 10809
         const val DEFAULT_VPN_MODE   = "proxy"
+        const val DEFAULT_SORT_MODE  = "default"
     }
 
     val subUrl: Flow<String>    = context.dataStore.data.map { it[KEY_SUB_URL] ?: "" }
@@ -53,6 +62,14 @@ class AppSettings(private val context: Context) {
     val language: Flow<String>  = context.dataStore.data.map { it[KEY_LANGUAGE] ?: "ru" }
     val autostart: Flow<Boolean> = context.dataStore.data.map { it[KEY_AUTOSTART] ?: false }
     val watchdog: Flow<Boolean> = context.dataStore.data.map { it[KEY_WATCHDOG] ?: true }
+
+    // ── Мультиподписка / сортировка: Flows ──────────────────────────────
+    /** Ключ выбранного сервера "subId::name". Пустая строка = выбор ещё не мигрирован. */
+    val selectedKey: Flow<String> = context.dataStore.data.map { it[KEY_SELECTED_KEY] ?: "" }
+    /** Режим сортировки: "default" | "name" | "ping". */
+    val sortMode: Flow<String> = context.dataStore.data.map { it[KEY_SORT_MODE] ?: DEFAULT_SORT_MODE }
+    /** Направление: 1 = asc, -1 = desc. */
+    val sortDir: Flow<Int> = context.dataStore.data.map { it[KEY_SORT_DIR] ?: 1 }
 
     val KEY_THEME = stringPreferencesKey("theme")
     val theme: Flow<String> = context.dataStore.data.map { it[KEY_THEME] ?: "midnight" }
@@ -106,6 +123,17 @@ class AppSettings(private val context: Context) {
 
     suspend fun setWatchdog(enabled: Boolean) =
         context.dataStore.edit { it[KEY_WATCHDOG] = enabled }
+
+    // ── Мультиподписка / сортировка: suspend setters ─────────────────────
+
+    suspend fun setSelectedKey(key: String) =
+        context.dataStore.edit { it[KEY_SELECTED_KEY] = key }
+
+    suspend fun setSortMode(mode: String) =
+        context.dataStore.edit { it[KEY_SORT_MODE] = mode }
+
+    suspend fun setSortDir(dir: Int) =
+        context.dataStore.edit { it[KEY_SORT_DIR] = dir }
 
     // ── Split Tunneling: suspend setters ─────────────────────────────
 
