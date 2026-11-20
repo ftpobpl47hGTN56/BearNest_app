@@ -64,6 +64,10 @@ class ThemesFragment : Fragment() {
     private val binding get() = _binding!!
     private val vm: MainViewModel by activityViewModels()
 
+    // lateinit: лямбда клика ссылается на адаптер, поэтому это поле класса,
+    // а не локальный val (иначе самоссылка в инициализаторе не компилируется).
+    private lateinit var themeAdapter: ThemeAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -86,16 +90,16 @@ class ThemesFragment : Fragment() {
             .getSharedPreferences(MainActivity.PREFS_NAME, Context.MODE_PRIVATE)
         val savedTheme = prefs.getString(MainActivity.KEY_THEME, "catppuccin") ?: "catppuccin"
 
-        val adapter = ThemeAdapter(THEMES, savedTheme) { theme ->
-            if (theme.key == adapter.selectedKey) return@ThemeAdapter
+        themeAdapter = ThemeAdapter(THEMES, savedTheme) { theme ->
+            if (theme.key == themeAdapter.selectedKey) return@ThemeAdapter
             // Мгновенная реакция рамки — ещё до recreate()
-            adapter.selectedKey = theme.key
+            themeAdapter.selectedKey = theme.key
             vm.setTheme(theme.key)
             prefs.edit().putString(MainActivity.KEY_THEME, theme.key).apply()
             activity?.recreate()
         }
         binding.recyclerThemes.layoutManager = GridLayoutManager(requireContext(), 2)
-        binding.recyclerThemes.adapter = adapter
+        binding.recyclerThemes.adapter = themeAdapter
         // Без анимаций — notifyDataSetChanged при смене рамки не должен мигать
         binding.recyclerThemes.itemAnimator = null
 
@@ -104,7 +108,9 @@ class ThemesFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.theme.collect { key ->
-                    if (key.isNotEmpty()) adapter.selectedKey = key
+                    if (key.isNotEmpty() && ::themeAdapter.isInitialized) {
+                        themeAdapter.selectedKey = key
+                    }
                 }
             }
         }
