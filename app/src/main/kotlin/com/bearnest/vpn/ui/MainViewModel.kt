@@ -18,6 +18,7 @@ import com.bearnest.vpn.data.ServerEntity
 import com.bearnest.vpn.data.SubscriptionEntity
 import com.bearnest.vpn.model.ServerConfig
 import com.bearnest.vpn.model.SubscriptionInfo
+import com.bearnest.vpn.vpn.AppNotifier
 import com.bearnest.vpn.vpn.BearVpnService
 import com.bearnest.vpn.vpn.VpnController
 import com.bearnest.vpn.vpn.toJson
@@ -42,6 +43,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val SORT_DEFAULT = "default"
         const val SORT_NAME    = "name"
         const val SORT_PING    = "ping"
+
+        // Категории логов для фильтрации во вкладке «Логи»
+        const val LOG_XRAY = "xray"   // строки ядра xray / сервиса
+        const val LOG_APP  = "app"    // подписки, пинг, выбор сервера
+        const val LOG_CONN = "conn"   // состояние соединения и трафика
 
         private const val SUB_ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
     }
@@ -125,6 +131,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         combine(_servers, _selectedIdx) { list, idx -> list.getOrNull(idx) }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** Имя сервера, к которому РЕАЛЬНО подключён сервис (может отличаться от
+     *  выбранного в списке — например, после переключения из плитки в шторке). */
+    private val _connectedServerName = MutableStateFlow("")
+    val connectedServerName: StateFlow<String> = _connectedServerName.asStateFlow()
+
     val language: StateFlow<String> = settings.language
         .stateIn(viewModelScope, SharingStarted.Eagerly, "ru")
 
@@ -163,22 +174,40 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Логи ───────────────────────────────────────────────────────────────────
 
-    data class LogEntry(val time: String, val level: Int, val msg: String)
+    data class LogEntry(
+        val time: String,
+        val level: Int,
+        val msg: String,
+        val cat: String = LOG_XRAY
+    )
 
     private val _logs = MutableStateFlow<List<LogEntry>>(emptyList())
     val logs: StateFlow<List<LogEntry>> = _logs.asStateFlow()
 
+    /** Строки ядра xray / VPN-сервиса (уровень распознаётся по маркерам в тексте). */
     fun addLog(line: String) {
+        val level = when {
+            line.contains("[Error]",   ignoreCase = true) -> 3
+            line.contains("[Warning]", ignoreCase = true) -> 2
+            line.contains("[Info]",    ignoreCase = true) -> 1
+            else -> 0
+        }
+        appendLog(line, level, LOG_XRAY)
+    }
+
+    /** События приложения: подписки, пинг, выбор сервера. */
+    fun logApp(msg: String, level: Int = 1) = appendLog(msg, level, LOG_APP)
+
+    /** Состояние соединения: подключение, отключение, смена сервера, трафик. */
+    fun logConn(msg: String, level: Int = 1) = appendLog(msg, level, LOG_CONN)
+
+    private fun appendLog(msg: String, level: Int, cat: String) {
         val entry = LogEntry(
             time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                 .format(java.util.Date()),
-            level = when {
-                line.contains("[Error]",   ignoreCase = true) -> 3
-                line.contains("[Warning]", ignoreCase = true) -> 2
-                line.contains("[Info]",    ignoreCase = true) -> 1
-                else -> 0
-            },
-            msg = line
+            level = level,
+            msg   = msg,
+            cat   = cat
         )
         _logs.value = (_logs.value + entry).takeLast(200)
     }
@@ -232,9 +261,61 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { settings.vpnMode.collect     { _vpnMode.value = it } }
         viewModelScope.launch { BearVpnService.logFlow.collect { msg -> addLog(msg) } }
         // Источник истины для состояния — connectedFlow сервиса.
+        // Заодно: логи переходов состояния, имя подключённого сервера, watchdog.
         viewModelScope.launch {
+            var prev: Boolean? = null
             BearVpnService.connectedFlow.collect { running ->
                 _connected.value = running
+                _connectedServerName.value =
+                    if (running) BearVpnService.currentServerName else ""
+                if (prev != null && prev != running) {
+                    if (running) {
+                        logConn("Connected: ${_connectedServerName.value}")
+                    } else {
+                        logConn("Disconnected")
+                        _trafficOk.value = null
+                    }
+                }
+                if (running) startTrafficWatchdog()
+                else { watchdogJob?.cancel(); watchdogJob = null }
+                prev = running
+            }
+        }
+    }
+
+    // ── [Watchdog] Периодическая проверка, что сервер жив ─────────────────────
+    // Раз в 30 сек гоняем реальный трафик через туннель. Два подряд провала =
+    // сервер «отвалился»: запись в лог + всплывающее уведомление.
+
+    private var watchdogJob: Job? = null
+
+    private fun startTrafficWatchdog() {
+        if (watchdogJob?.isActive == true) return
+        watchdogJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(30_000)   // первичная проверка уже идёт в startTunMode (+3 сек)
+            var fails = 0
+            while (isActive && _connected.value) {
+                val ok = try {
+                    ServerPinger.checkRealTraffic(socksPort = settings.proxyPort.first())
+                } catch (e: Exception) {
+                    false
+                }
+                _trafficOk.value = ok
+                if (ok) {
+                    if (fails >= 2) logConn("Traffic restored — server responds again")
+                    fails = 0
+                } else {
+                    fails++
+                    when (fails) {
+                        1 -> logConn("Traffic check failed — re-checking in 30s", level = 2)
+                        2 -> {
+                            val name = currentServer?.name ?: ""
+                            logConn("Server is down (no traffic): $name", level = 3)
+                            AppNotifier.notifyServerDown(context, name)
+                        }
+                    }
+                }
+                delay(30_000)
             }
         }
     }
@@ -308,7 +389,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         subDao.insert(sub)
         dao.reassignServers("", sub.id)
         dao.reassignServers("legacy", sub.id)
-        addLog("[Info] Migrated legacy subscription → ${sub.name}")
+        logApp("Migrated legacy subscription → ${sub.name}")
     }
 
     // ── Подписки: загрузка / обновление (порт doLoad/refreshSub из Tauri) ────
@@ -343,7 +424,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 val existing = subDao.getAll().firstOrNull { it.url == trimmed }
                 if (existing != null) {
                     refreshSubscriptionInternal(existing)
-                    addLog("[Info] Subscription refreshed: ${existing.name}")
+                    logApp("Subscription refreshed: ${existing.name}")
                 } else {
                     val fetched = fetchSubscription(trimmed)
                     val sub = SubscriptionEntity(
@@ -365,11 +446,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         ServerEntity.fromServerConfig(cfg, sortOrder = i, subscriptionId = sub.id)
                     })
                     syncLegacySubUrl()
-                    addLog("[Info] Subscription added: ${sub.name} (${fetched.servers.size} servers)")
+                    logApp("Subscription added: ${sub.name} (${fetched.servers.size} servers)")
                 }
             } catch (e: Exception) {
                 _error.value = context.getString(R.string.error_loading_prefix, e.message ?: "")
-                addLog("[Error] Subscription load failed: ${e.message}")
+                logApp("Subscription load failed: ${e.message}", level = 3)
             } finally {
                 _loading.value = false
             }
@@ -385,11 +466,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 val sub = subDao.getById(id)
                 if (sub != null) {
                     refreshSubscriptionInternal(sub)
-                    addLog("[Info] Subscription refreshed: ${sub.name}")
+                    logApp("Subscription refreshed: ${sub.name}")
                 }
             } catch (e: Exception) {
                 _error.value = context.getString(R.string.error_loading_prefix, e.message ?: "")
-                addLog("[Error] Subscription refresh failed: ${e.message}")
+                logApp("Subscription refresh failed: ${e.message}", level = 3)
             } finally {
                 _loading.value = false
             }
@@ -413,13 +494,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 } catch (e: Exception) {
                     fail++
                     lastError = e.message
-                    addLog("[Warning] Refresh failed for ${sub.name}: ${e.message}")
+                    logApp("Refresh failed for ${sub.name}: ${e.message}", level = 2)
                 }
             }
             if (ok == 0 && fail > 0) {
                 _error.value = context.getString(R.string.error_loading_prefix, lastError ?: "")
             }
-            addLog("[Info] Refresh all: $ok ok, $fail failed")
+            logApp("Refresh all: $ok ok, $fail failed")
             _loading.value = false
         }
     }
@@ -481,7 +562,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             subDao.insert(clone)
             val servers = dao.getBySubscription(orig.id)
             dao.insertAll(servers.map { it.copy(id = 0, subscriptionId = clone.id, pingMs = -1L) })
-            addLog("[Info] Subscription cloned: $copyName")
+            logApp("Subscription cloned: $copyName")
         }
     }
 
@@ -499,7 +580,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 settings.setSelectedKey("")
             }
             syncLegacySubUrl()
-            addLog("[Info] Subscription deleted")
+            logApp("Subscription deleted")
         }
     }
 
@@ -558,6 +639,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             val current = _servers.value
             if (current.isEmpty()) return@launch
+            logApp("Ping started: ${current.size} servers")
             _pingProgress.value = 0
             val updated = ServerPinger.pingAll(current) { idx, _ ->
                 _pingProgress.value = idx + 1
@@ -566,12 +648,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             updated.forEach { cfg ->
                 if (cfg.dbId > 0) dao.updatePing(cfg.dbId, cfg.pingMs)
             }
+            val alive = updated.count { it.pingMs >= 0 }
+            logApp("Ping finished: $alive/${updated.size} servers alive")
         }
     }
 
     fun autoSelectBest() {
         viewModelScope.launch {
-            ServerPinger.findBest(_servers.value)?.let { selectServerByKey(it.selectionKey) }
+            val best = ServerPinger.findBest(_servers.value)
+            if (best == null) {
+                logApp("Auto-select: no alive servers (run ping first)", level = 2)
+            } else {
+                logApp("Auto-selected best server: ${best.name} (${best.pingMs} ms)")
+                selectServerByKey(best.selectionKey)
+            }
         }
     }
 
@@ -602,6 +692,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             // [QuickTiles] VPN включён — сразу переключаемся на новый сервер
             // (так же, как из плитки в шторке). selectAndSwitch сам сохранит индекс.
             _trafficOk.value = null
+            logConn("Switching server → ${_servers.value.getOrNull(idx)?.name ?: "?"}")
             VpnController.selectAndSwitch(context, idx, connectIfStopped = false)
         } else {
             settings.setSelectedIdx(idx)
@@ -635,6 +726,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             else _error.value = context.getString(R.string.error_vpn_permission_required)
             return
         }
+        logConn("Connecting to ${server.name} (${server.address}:${server.port})…")
         val serviceIntent = Intent(context, BearVpnService::class.java).apply {
             action = BearVpnService.ACTION_START
             putExtra(BearVpnService.EXTRA_SERVER_JSON, server.toJson())
@@ -654,9 +746,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             val ok = ServerPinger.checkRealTraffic(socksPort = socksPort)
             _trafficOk.value = ok
             if (!ok) {
-                addLog("[Warning] Tunnel is up but no real traffic detected — server may be down")
+                logConn("Tunnel is up but no real traffic detected — server may be down", level = 2)
             } else {
-                addLog("[Info] Traffic check passed — tunnel is working")
+                logConn("Traffic check passed — tunnel is working")
             }
         }
     }
@@ -668,7 +760,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // разветвления по _vpnMode. Раньше при _vpnMode == "proxy" мы глушили
         // пустой UI-XrayManager (controller == null → "xray stopped" вхолостую),
         // а живое ядро в сервисе оставалось работать вечно. Это и был баг.
-        //
+        logConn("Disconnect requested by user")
         // 1) Прямой teardown в процессе — не зависит от доставки intent'ов
         //    (на Tecno/HiOS stopService()/ACTION_STOP иногда молча дропаются).
         BearVpnService.stopNow()

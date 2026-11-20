@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -32,6 +33,10 @@ class SplitTunnelFragment : Fragment() {
 
     // [Fixed] Адаптер для кастомных доменов — подключён к recycler_custom_domains
     private lateinit var domainAdapter: BypassDomainAdapter
+
+    // ── Поиск по кастомным доменам (лупа) ─────────────────────────────────
+    private var searchQuery = ""
+    private var lastCustomDomains: List<String> = emptyList()
 
     // ── Импорт / экспорт bypass-листа (SAF) ──────────────────────────────
 
@@ -96,6 +101,13 @@ class SplitTunnelFragment : Fragment() {
         }
 
         setupRecycler()   // [Fixed] инициализация RecyclerView
+
+        // Лупа: фильтруем список кастомных доменов по подстроке
+        binding.etSearch.doAfterTextChanged { s ->
+            searchQuery = s?.toString()?.trim()?.lowercase().orEmpty()
+            applyDomainFilter()
+        }
+
         setupChipListeners()
         setupButtons()
         observeState()
@@ -115,6 +127,15 @@ class SplitTunnelFragment : Fragment() {
         binding.recyclerCustomDomains.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerCustomDomains.adapter = domainAdapter
         binding.recyclerCustomDomains.itemAnimator = null
+    }
+
+    /** Фильтр списка кастомных доменов по поисковой строке. */
+    private fun applyDomainFilter() {
+        val filtered = if (searchQuery.isEmpty()) lastCustomDomains
+            else lastCustomDomains.filter { it.contains(searchQuery) }
+        domainAdapter.submitList(filtered)
+        binding.tvCustomDomainsEmpty.visibility =
+            if (filtered.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun setupChipListeners() {
@@ -199,16 +220,11 @@ class SplitTunnelFragment : Fragment() {
                         updatingChips = false
 
                         // [Fixed] Кастомные домены = все домены минус пресеты
-                        // Отображаем в RecyclerView отсортированно
-                        val customDomains = current
+                        // Отображаем в RecyclerView отсортированно (с учётом поиска)
+                        lastCustomDomains = current
                             .filter { it !in allPresetDomains }
                             .sorted()
-
-                        domainAdapter.submitList(customDomains)
-
-                        // Подсказка "нажмите +" — скрываем если есть кастомные домены
-                        binding.tvCustomDomainsEmpty.visibility =
-                            if (customDomains.isEmpty()) View.VISIBLE else View.GONE
+                        applyDomainFilter()
                     }
                 }
             }
