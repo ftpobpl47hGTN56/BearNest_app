@@ -11,4 +11,29 @@
         android:icon="@drawable/ic_auto_awesome_24"
         android:title="@string/action_best_server"
         app:showAsAction="always"/>
+    <item
+        android:id="@+id/action_sort"
+        android:title="@string/action_sort"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/action_sort_default"
+                    android:title="@string/sort_default"
+                    android:checkable="true"/>
+                <item
+                    android:id="@+id/action_sort_name"
+                    android:title="@string/sort_name"
+                    android:checkable="true"/>
+                <item
+                    android:id="@+id/action_sort_ping"
+                    android:title="@string/sort_ping"
+                    android:checkable="true"/>
+            </group>
+        </menu>
+    </item>
+    <item
+        android:id="@+id/action_refresh_all"
+        android:title="@string/action_refresh_all_subs"
+        app:showAsAction="never"/>
 </menu>

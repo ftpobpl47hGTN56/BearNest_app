@@ -7,7 +7,7 @@
     <string name="nav_logs">Logs</string>
     <string name="nav_servers">Servers</string>
     <!-- Logs -->
-    <string name="logs_title">Xray Logs</string>
+    <string name="logs_title">Logs</string>
     <string name="copy">Copy</string>
     <string name="clear">Clear</string>
     <string name="logs_empty_hint">Logs will appear after connection</string>
@@ -17,12 +17,87 @@
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
 
+    <!-- Connection state (home) -->
+    <string name="conn_state_connected">Connected</string>
+    <string name="conn_state_connected_server" formatted="false">Connected · %1$s</string>
+    <string name="conn_state_disconnected">Disconnected</string>
+
     <!-- Server -->
     <string name="server_not_selected">No server selected</string>
     <string name="action_back">Back</string>
     <string name="action_ping">Ping</string>
     <string name="action_best_server">Best server</string>
     <string name="servers_title_with_count" formatted="false">Servers (%d)</string>
+
+    <!-- Sorting -->
+    <string name="action_sort">Sort</string>
+    <string name="sort_default">Default order</string>
+    <string name="sort_name">By name</string>
+    <string name="sort_ping">By ping</string>
+
+    <!-- Multi-subscription -->
+    <string name="action_refresh_all_subs">Refresh all subscriptions</string>
+    <string name="action_refresh_sub">Refresh</string>
+    <string name="action_clone_sub">Clone</string>
+    <string name="action_delete_sub">Delete subscription</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="confirm_delete_sub" formatted="false">Delete subscription "%s" and all its servers?</string>
+    <string name="sub_servers_count" formatted="false">Servers: %d</string>
+    <string name="sub_copy">copy</string>
+    <string name="cd_favorite">Favorite</string>
+    <string name="cd_expand">Collapse / expand</string>
+
+    <!-- Settings sections -->
+    <string name="section_subscriptions">Subscriptions</string>
+    <string name="section_themes">Themes</string>
+    <string name="section_bypass">Bypass list</string>
+    <string name="add_subscription">Add subscription</string>
+    <string name="subscriptions_empty">No subscriptions yet — add one above</string>
+    <string name="sub_formats_hint" translatable="false">Supported: Clash YAML, Base64 URI list, vless:// vmess:// trojan:// ss://</string>
+
+    <!-- Theme names -->
+    <string name="theme_name_catppuccin" translatable="false">Catppuccin</string>
+    <string name="theme_name_midnight" translatable="false">Midnight</string>
+    <string name="theme_name_forest" translatable="false">Forest</string>
+    <string name="theme_name_obsidian" translatable="false">Obsidian</string>
+    <string name="theme_name_snow" translatable="false">Snow</string>
+    <string name="theme_name_ocean" translatable="false">Ocean</string>
+    <string name="theme_name_sunset" translatable="false">Sunset</string>
+    <string name="theme_name_sakura" translatable="false">Sakura</string>
+    <string name="theme_name_mint" translatable="false">Mint</string>
+    <string name="theme_name_amethyst" translatable="false">Amethyst</string>
+
+    <!-- Bypass list: edit / import / export / search -->
+    <string name="bypass_import">Import</string>
+    <string name="bypass_export">Export</string>
+    <string name="edit_domain_title">Edit domain</string>
+    <string name="action_save">Save</string>
+    <string name="bypass_import_result" formatted="false">Imported: %1$d, already present: %2$d</string>
+    <string name="bypass_import_error">Failed to read file</string>
+    <string name="bypass_export_done">Bypass list exported</string>
+    <string name="bypass_export_empty">List is empty — nothing to export</string>
+    <string name="bypass_search_hint">Search domains</string>
+
+    <!-- Logs: filters & zoom -->
+    <string name="log_filter_all">All</string>
+    <string name="log_filter_xray">Xray</string>
+    <string name="log_filter_conn">Connection</string>
+    <string name="log_filter_app">App</string>
+    <string name="action_zoom_in">Larger text</string>
+    <string name="action_zoom_out">Smaller text</string>
+
+    <!-- Alert notifications (server down / auto-switch / failed) -->
+    <string name="notif_channel_alerts">Connection alerts</string>
+    <string name="notif_server_unknown">Server</string>
+    <string name="notif_server_down_title">Server not responding</string>
+    <string name="notif_server_down_text" formatted="false">%1$s is not passing traffic — consider switching servers</string>
+    <string name="notif_switched_title">Server switched</string>
+    <string name="notif_switched_text" formatted="false">Now connected: %1$s</string>
+    <string name="notif_conn_failed_title">Connection failed</string>
+    <string name="notif_conn_failed_text" formatted="false">Could not connect to %1$s</string>
+    <string name="notif_conn_lost_title">VPN disconnected</string>
+    <string name="notif_conn_lost_text">Tunnel was closed by the system or another VPN app</string>
 
     <!-- Proxy -->
     <string name="proxy_active">Proxy active</string>
@@ -59,7 +134,7 @@
     <string name="github_label">GitHub</string>
 
     <!-- App info (not translatable) -->
-    <string name="app_version" translatable="false">3.29.26</string>
+    <string name="app_version" translatable="false">3.30.27</string>
     <string name="engine_value" translatable="false">xray-core (XTLS/Xray-core)</string>
     <string name="protocols_value" translatable="false">VLESS · VMess · Trojan · Shadowsocks</string>
     <string name="reality_value" translatable="false">XTLS Vision + Reality</string>

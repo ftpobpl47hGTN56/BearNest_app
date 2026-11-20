@@ -22,6 +22,42 @@
             android:fitsSystemWindows="true"/>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Фильтр по категориям логов -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chip_group_log_filter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="12dp"
+        app:chipSpacingHorizontal="4dp"
+        app:singleSelection="true"
+        app:selectionRequired="true">
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_log_all"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/log_filter_all"/>
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_log_conn"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/log_filter_conn"/>
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_log_xray"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/log_filter_xray"/>
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_log_app"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/log_filter_app"/>
+    </com.google.android.material.chip.ChipGroup>
+
     <!-- Пустое состояние -->
     <TextView
         android:id="@+id/tv_empty"

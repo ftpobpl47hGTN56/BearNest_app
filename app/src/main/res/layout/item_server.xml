@@ -74,6 +74,17 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Звезда избранного -->
+    <ImageButton
+        android:id="@+id/btn_favorite"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_favorite"
+        app:srcCompat="@drawable/ic_star_outline_24"
+        app:tint="?attr/colorOnSurfaceVariant"/>
+
     <!-- Пинг / индикатор -->
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/ping_indicator"

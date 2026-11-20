@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -19,7 +21,9 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SplitTunnelFragment : Fragment() {
 
@@ -29,6 +33,22 @@ class SplitTunnelFragment : Fragment() {
 
     // [Fixed] Адаптер для кастомных доменов — подключён к recycler_custom_domains
     private lateinit var domainAdapter: BypassDomainAdapter
+
+    // ── Поиск по кастомным доменам (лупа) ─────────────────────────────────
+    private var searchQuery = ""
+    private var lastCustomDomains: List<String> = emptyList()
+
+    // ── Импорт / экспорт bypass-листа (SAF) ──────────────────────────────
+
+    /** Экспорт: системный диалог «создать файл» → пишем домены построчно. */
+    private val exportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri -> uri?.let { exportToUri(it) } }
+
+    /** Импорт: системный выбор файла (.txt — домен на строку). */
+    private val importLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let { importFromUri(it) } }
 
     private val chipDomains = mapOf(
         R.id.chip_tinkoff   to setOf("tinkoff.ru", "tinkoff.com"),
@@ -81,6 +101,13 @@ class SplitTunnelFragment : Fragment() {
         }
 
         setupRecycler()   // [Fixed] инициализация RecyclerView
+
+        // Лупа: фильтруем список кастомных доменов по подстроке
+        binding.etSearch.doAfterTextChanged { s ->
+            searchQuery = s?.toString()?.trim()?.lowercase().orEmpty()
+            applyDomainFilter()
+        }
+
         setupChipListeners()
         setupButtons()
         observeState()
@@ -89,14 +116,26 @@ class SplitTunnelFragment : Fragment() {
     // ── [Fixed] RecyclerView для кастомных доменов ────────────────────────────
 
     private fun setupRecycler() {
-        domainAdapter = BypassDomainAdapter { domain ->
-            lifecycleScope.launch {
-                appSettings.removeBypassDomain(domain)
+        domainAdapter = BypassDomainAdapter(
+            onEdit = { domain -> showEditDomainDialog(domain) },
+            onDelete = { domain ->
+                lifecycleScope.launch {
+                    appSettings.removeBypassDomain(domain)
+                }
             }
-        }
+        )
         binding.recyclerCustomDomains.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerCustomDomains.adapter = domainAdapter
         binding.recyclerCustomDomains.itemAnimator = null
+    }
+
+    /** Фильтр списка кастомных доменов по поисковой строке. */
+    private fun applyDomainFilter() {
+        val filtered = if (searchQuery.isEmpty()) lastCustomDomains
+            else lastCustomDomains.filter { it.contains(searchQuery) }
+        domainAdapter.submitList(filtered)
+        binding.tvCustomDomainsEmpty.visibility =
+            if (filtered.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun setupChipListeners() {
@@ -127,6 +166,24 @@ class SplitTunnelFragment : Fragment() {
         }
 
         binding.fabAddDomain.setOnClickListener { showAddDomainDialog() }
+
+        // ── Импорт / экспорт ─────────────────────────────────────────
+        binding.btnImport.setOnClickListener {
+            importLauncher.launch(arrayOf("text/plain", "application/octet-stream", "*/*"))
+        }
+        binding.btnExport.setOnClickListener {
+            lifecycleScope.launch {
+                if (appSettings.getBypassDomainsOnce().isEmpty()) {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.bypass_export_empty,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    exportLauncher.launch("bearnest-bypass.txt")
+                }
+            }
+        }
     }
 
     private fun observeState() {
@@ -163,21 +220,29 @@ class SplitTunnelFragment : Fragment() {
                         updatingChips = false
 
                         // [Fixed] Кастомные домены = все домены минус пресеты
-                        // Отображаем в RecyclerView отсортированно
-                        val customDomains = current
+                        // Отображаем в RecyclerView отсортированно (с учётом поиска)
+                        lastCustomDomains = current
                             .filter { it !in allPresetDomains }
                             .sorted()
-
-                        domainAdapter.submitList(customDomains)
-
-                        // Подсказка "нажмите +" — скрываем если есть кастомные домены
-                        binding.tvCustomDomainsEmpty.visibility =
-                            if (customDomains.isEmpty()) View.VISIBLE else View.GONE
+                        applyDomainFilter()
                     }
                 }
             }
         }
     }
+
+    // ── Нормализация домена (общая для add/edit/import) ─────────────────────
+
+    private fun normalizeDomain(token: String): String =
+        token.trim()
+            .lowercase()
+            .removePrefix("https://")
+            .removePrefix("http://")
+            .removePrefix("www.")
+            .trimEnd('/')
+
+    private fun isValidDomain(d: String): Boolean =
+        d.isNotBlank() && d.contains('.') && d.length >= 4
 
     // ── [Fixed] Диалог добавления домена ─────────────────────────────────────
 
@@ -211,15 +276,8 @@ class SplitTunnelFragment : Fragment() {
 
                 val domains = raw
                     .split(" ", "\n", "\t")
-                    .map { token ->
-                        token.trim()
-                            .lowercase()
-                            .removePrefix("https://")
-                            .removePrefix("http://")
-                            .removePrefix("www.")
-                            .trimEnd('/')
-                    }
-                    .filter { it.isNotBlank() && it.contains('.') && it.length >= 4 }
+                    .map { normalizeDomain(it) }
+                    .filter { isValidDomain(it) }
                     .toSet()
 
                 if (domains.isEmpty()) {
@@ -245,6 +303,103 @@ class SplitTunnelFragment : Fragment() {
             .show()
 
         et.requestFocus()
+    }
+
+    // ── Диалог редактирования домена (карандаш рядом с корзиной) ────────────
+
+    private fun showEditDomainDialog(oldDomain: String) {
+        val til = TextInputLayout(requireContext()).apply {
+            hint = "site.ru"
+        }
+        val et = TextInputEditText(requireContext()).apply {
+            setText(oldDomain)
+            setSelection(oldDomain.length)
+            isSingleLine = true
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_URI or
+                    android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        }
+        til.addView(et)
+
+        val container = FrameLayout(requireContext()).apply {
+            val px = (24 * resources.displayMetrics.density).toInt()
+            setPadding(px, 8, px, 0)
+            addView(til)
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.edit_domain_title)
+            .setView(container)
+            .setPositiveButton(R.string.action_save) { _, _ ->
+                val newDomain = normalizeDomain(et.text.toString())
+                if (!isValidDomain(newDomain)) {
+                    Toast.makeText(context, "Неверный формат. Пример: site.ru", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                if (newDomain == oldDomain) return@setPositiveButton
+                lifecycleScope.launch {
+                    // Замена: удаляем старый, добавляем новый
+                    appSettings.removeBypassDomain(oldDomain)
+                    appSettings.addBypassDomain(newDomain)
+                }
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
+
+        et.requestFocus()
+    }
+
+    // ── Импорт / экспорт ─────────────────────────────────────────────────────
+
+    private fun exportToUri(uri: android.net.Uri) {
+        val ctx = requireContext().applicationContext
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val domains = appSettings.getBypassDomainsOnce().sorted()
+                ctx.contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(domains.joinToString("\n").toByteArray(Charsets.UTF_8))
+                } ?: throw IllegalStateException("openOutputStream returned null")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(ctx, R.string.bypass_export_done, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(ctx, R.string.bypass_import_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun importFromUri(uri: android.net.Uri) {
+        val ctx = requireContext().applicationContext
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val text = ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    input.readBytes().toString(Charsets.UTF_8)
+                } ?: ""
+                val domains = text
+                    .split(Regex("[\\s,;]+"))
+                    .map { normalizeDomain(it) }
+                    .filter { isValidDomain(it) }
+                    .toSet()
+                var added = 0
+                var skipped = 0
+                domains.forEach { domain ->
+                    if (appSettings.addBypassDomain(domain)) added++ else skipped++
+                }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        ctx,
+                        getString(R.string.bypass_import_result, added, skipped),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(ctx, R.string.bypass_import_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {

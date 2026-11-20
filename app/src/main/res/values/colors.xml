@@ -74,4 +74,59 @@
     <color name="snow_ping_bad">#C92A2A</color>
     <color name="snow_icon_tint">#343A40</color>
     <color name="snow_on_surface_strong">#212529</color>
+
+    <!-- Ocean — тёмная сине-бирюзовая -->
+    <color name="ocean_primary">#64D8CB</color>
+    <color name="ocean_on_primary">#00352F</color>
+    <color name="ocean_secondary">#4FC3F7</color>
+    <color name="ocean_background">#0A1622</color>
+    <color name="ocean_surface">#12222E</color>
+    <color name="ocean_on_surface">#D9E8F0</color>
+    <color name="ocean_surface_variant">#1B3140</color>
+    <color name="ocean_on_surface_variant">#8FB3C4</color>
+    <color name="ocean_error">#F38BA8</color>
+
+    <!-- Sunset — тёмная тёплая -->
+    <color name="sunset_primary">#FFB86C</color>
+    <color name="sunset_on_primary">#3A2200</color>
+    <color name="sunset_secondary">#FF7A93</color>
+    <color name="sunset_background">#1A1210</color>
+    <color name="sunset_surface">#251D18</color>
+    <color name="sunset_on_surface">#F0E2D6</color>
+    <color name="sunset_surface_variant">#372A22</color>
+    <color name="sunset_on_surface_variant">#C7A892</color>
+    <color name="sunset_error">#FF6B6B</color>
+
+    <!-- Sakura — тёмная розовая -->
+    <color name="sakura_primary">#F5A9D0</color>
+    <color name="sakura_on_primary">#3D0F2A</color>
+    <color name="sakura_secondary">#CBA6F7</color>
+    <color name="sakura_background">#1C1218</color>
+    <color name="sakura_surface">#281B24</color>
+    <color name="sakura_on_surface">#F2DEE8</color>
+    <color name="sakura_surface_variant">#3A2833</color>
+    <color name="sakura_on_surface_variant">#C9A3B5</color>
+    <color name="sakura_error">#FF6B81</color>
+
+    <!-- Mint — тёмная мятная -->
+    <color name="mint_primary">#7EE0B8</color>
+    <color name="mint_on_primary">#003823</color>
+    <color name="mint_secondary">#4ADE80</color>
+    <color name="mint_background">#0E1813</color>
+    <color name="mint_surface">#15241B</color>
+    <color name="mint_on_surface">#DBEEE2</color>
+    <color name="mint_surface_variant">#1F3527</color>
+    <color name="mint_on_surface_variant">#93BFA6</color>
+    <color name="mint_error">#F38BA8</color>
+
+    <!-- Amethyst — тёмная фиолетовая -->
+    <color name="amethyst_primary">#B69CFF</color>
+    <color name="amethyst_on_primary">#241140</color>
+    <color name="amethyst_secondary">#9D7BFF</color>
+    <color name="amethyst_background">#130F1D</color>
+    <color name="amethyst_surface">#1D1830</color>
+    <color name="amethyst_on_surface">#E4DEF5</color>
+    <color name="amethyst_surface_variant">#2A2440</color>
+    <color name="amethyst_on_surface_variant">#A79BCB</color>
+    <color name="amethyst_error">#F38BA8</color>
 </resources>

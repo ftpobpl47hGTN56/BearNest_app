@@ -3,8 +3,16 @@ package com.bearnest.vpn.model
 /**
  * Конфигурация одного сервера.
  * Полный порт ServerConfig.cs из Windows-версии BearNest.
+ *
+ * [MultiSub] Добавлены android-специфичные поля:
+ *  - dbId           — первичный ключ в Room (для isFavorite / updatePing)
+ *  - subscriptionId — подписка-владелец (мультиподписка)
+ *  - isFavorite     — избранный сервер (поднимается наверх своей группы)
  */
 data class ServerConfig(
+    val dbId: Int = 0,
+    val subscriptionId: String = "",
+    val isFavorite: Boolean = false,
     val name: String = "",
     val protocol: String = "",   // vless, vmess, trojan, ss
     val address: String = "",
@@ -40,6 +48,9 @@ data class ServerConfig(
             pingMs < 150  -> PingColor.OK
             else          -> PingColor.BAD
         }
+
+    /** Ключ выбора вида "subId::name" — переживает сортировку и обновление подписки. */
+    val selectionKey: String get() = "$subscriptionId::$name"
 
     override fun toString() =
         if (name.isBlank()) "$protocol://$address:$port" else name

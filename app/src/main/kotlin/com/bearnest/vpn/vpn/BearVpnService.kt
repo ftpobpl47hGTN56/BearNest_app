@@ -215,12 +215,18 @@ class BearVpnService : TProxyService() {
         scope.launch {
             coreLock.withLock {
                 try {
-                    if (isRunning || tunPfd != null || xrayManager != null) {
+                    val hadCore = isRunning || tunPfd != null || xrayManager != null
+                    if (hadCore) {
                         Log.i(TAG, "switch: $currentServerName → ${server.name}")
                         notifyText(str(R.string.notif_switching, server.name))
                         tearDownCore()
                     }
                     startVpn(server)
+                    // [Alerts] Всплывающее оповещение об автосмене сервера —
+                    // только при переключении на живом соединении, не при первом старте.
+                    if (hadCore && isRunning) {
+                        AppNotifier.notifyServerSwitched(applicationContext, server.name)
+                    }
                 } finally {
                     busy = false
                     VpnController.refreshTiles(applicationContext)
@@ -232,6 +238,8 @@ class BearVpnService : TProxyService() {
     private suspend fun startVpn(server: ServerConfig) {
         val pfd = buildTunInterface() ?: run {
             Log.e(TAG, "Failed to establish TUN")
+            logFlow.tryEmit("[Error] Failed to establish TUN interface")
+            AppNotifier.notifyConnectFailed(applicationContext, server.name)
             stopVpn()
             return
         }
@@ -264,6 +272,8 @@ class BearVpnService : TProxyService() {
         val err = mgr.start(config)
         if (err != null) {
             Log.e(TAG, "xray failed: $err")
+            logFlow.tryEmit("[Error] xray failed to start: $err")
+            AppNotifier.notifyConnectFailed(applicationContext, server.name)
             stopVpn()
             return
         }
@@ -361,6 +371,9 @@ class BearVpnService : TProxyService() {
     }
 
     override fun onRevoke() {
+        // [Alerts] Туннель отозван системой или другим VPN-приложением — предупреждаем.
+        AppNotifier.notifyConnectionLost(applicationContext)
+        logFlow.tryEmit("[Error] VPN tunnel revoked by system or another VPN app")
         tearDownCore()      // отзыв туннеля другим VPN / пользователем — тоже чистый останов
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

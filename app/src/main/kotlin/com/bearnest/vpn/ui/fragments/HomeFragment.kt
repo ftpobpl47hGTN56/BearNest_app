@@ -61,6 +61,8 @@ class HomeFragment : Fragment() {
                 launch { vm.currentServerFlow.collect { updateServerCard(it) } }
                 launch { vm.subInfo.collect        { updateSubCard(it) } }
                 launch { vm.sessionStartMs.collect { startTimerIfNeeded(it) } }
+                // Имя сервера, к которому реально подключён сервис
+                launch { vm.connectedServerName.collect { updateConnStateLine() } }
 
                 // [Fixed] Наблюдаем реальный статус трафика через туннель
                 // null  = подключение идёт / отключено  → скрыть
@@ -104,6 +106,30 @@ class HomeFragment : Fragment() {
 
         // Сбрасываем статус трафика при отключении
         if (!connected) binding.tvTrafficStatus.visibility = View.GONE
+
+        updateConnStateLine()
+    }
+
+    // ── Строка состояния соединения (под кнопкой) ────────────────────────────
+    // «Подключено · <сервер>» — зелёным, «Отключено» — приглушённым.
+    // Сервер берём из сервиса (реальный), а не из выбора в списке:
+    // после переключения из плитки они могут отличаться.
+
+    private fun updateConnStateLine() {
+        val b = _binding ?: return
+        if (vm.connected.value) {
+            val name = vm.connectedServerName.value
+            b.tvConnState.text = if (name.isNotEmpty())
+                getString(R.string.conn_state_connected_server, name)
+            else
+                getString(R.string.conn_state_connected)
+            b.tvConnState.setTextColor(requireContext().getColor(R.color.bear_green))
+        } else {
+            b.tvConnState.setText(R.string.conn_state_disconnected)
+            b.tvConnState.setTextColor(
+                requireContext().resolveAttr(com.google.android.material.R.attr.colorOnSurfaceVariant)
+            )
+        }
     }
 
     // ── [Fixed] Статус реального трафика через туннель ────────────────────────

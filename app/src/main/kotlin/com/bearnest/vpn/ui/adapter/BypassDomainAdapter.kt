@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bearnest.vpn.databinding.ItemBypassDomainBinding
 
 class BypassDomainAdapter(
+    private val onEdit: (String) -> Unit,
     private val onDelete: (String) -> Unit
 ) : ListAdapter<String, BypassDomainAdapter.ViewHolder>(DiffCallback) {
 
@@ -16,6 +17,7 @@ class BypassDomainAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(domain: String) {
             binding.tvDomain.text = domain
+            binding.btnEdit.setOnClickListener { onEdit(domain) }
             binding.btnDelete.setOnClickListener { onDelete(domain) }
         }
     }

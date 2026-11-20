@@ -13,11 +13,14 @@ import com.bearnest.vpn.ui.fragments.resolveAttr
 
 class LogAdapter : ListAdapter<MainViewModel.LogEntry, LogAdapter.ViewHolder>(DIFF) {
 
+    /** Размер текста логов (sp) — меняется кнопками +/− в тулбаре. */
+    var textSizeSp: Float = 11f
+
     inner class ViewHolder(private val tv: TextView) : RecyclerView.ViewHolder(tv) {
         fun bind(entry: MainViewModel.LogEntry) {
             val ctx = tv.context
-            tv.text = "[${entry.time}] ${entry.msg}"
-            tv.textSize = 11f
+            tv.text = "[${entry.time}] [${entry.cat.uppercase()}] ${entry.msg}"
+            tv.textSize = textSizeSp
             tv.typeface = Typeface.MONOSPACE
             tv.setTextColor(
                 when (entry.level) {

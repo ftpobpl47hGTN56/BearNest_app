@@ -140,8 +140,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showFragmentByTag(tag: String) {
 
-        // ← ДОБАВИТЬ: сбрасываем back stack (SplitTunnelFragment и любые другие sub-экраны)
-        // Иначе при переключении таба они висят в стеке и ломают рендер
+        // Сбрасываем back stack (SplitTunnelFragment и любые другие sub-экраны).
+        // Иначе при переключении таба они висят в стеке и ломают рендер.
         supportFragmentManager.popBackStackImmediate(
             null,
             androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
@@ -176,6 +176,11 @@ class MainActivity : AppCompatActivity() {
         "forest"   -> R.style.Theme_BearNest_Forest
         "obsidian" -> R.style.Theme_BearNest_Obsidian
         "snow"     -> R.style.Theme_BearNest_Snow
+        "ocean"    -> R.style.Theme_BearNest_Ocean
+        "sunset"   -> R.style.Theme_BearNest_Sunset
+        "sakura"   -> R.style.Theme_BearNest_Sakura
+        "mint"     -> R.style.Theme_BearNest_Mint
+        "amethyst" -> R.style.Theme_BearNest_Amethyst
         else       -> R.style.Theme_BearNest_Catppuccin
     }
 
