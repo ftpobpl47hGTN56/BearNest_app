@@ -43,6 +43,26 @@
     <string name="cd_favorite">Favorite</string>
     <string name="cd_expand">Collapse / expand</string>
 
+    <!-- Settings sections -->
+    <string name="section_subscriptions">Subscriptions</string>
+    <string name="section_themes">Themes</string>
+    <string name="section_bypass">Bypass list</string>
+    <string name="add_subscription">Add subscription</string>
+    <string name="subscriptions_empty">No subscriptions yet — add one above</string>
+    <string name="sub_formats_hint" translatable="false">Supported: Clash YAML, Base64 URI list, vless:// vmess:// trojan:// ss://</string>
+
+    <!-- Theme names -->
+    <string name="theme_name_catppuccin" translatable="false">Catppuccin</string>
+    <string name="theme_name_midnight" translatable="false">Midnight</string>
+    <string name="theme_name_forest" translatable="false">Forest</string>
+    <string name="theme_name_obsidian" translatable="false">Obsidian</string>
+    <string name="theme_name_snow" translatable="false">Snow</string>
+    <string name="theme_name_ocean" translatable="false">Ocean</string>
+    <string name="theme_name_sunset" translatable="false">Sunset</string>
+    <string name="theme_name_sakura" translatable="false">Sakura</string>
+    <string name="theme_name_mint" translatable="false">Mint</string>
+    <string name="theme_name_amethyst" translatable="false">Amethyst</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Proxy active</string>
     <string name="proxy_hint">Configure proxy in WiFi or use an app supporting SOCKS5</string>

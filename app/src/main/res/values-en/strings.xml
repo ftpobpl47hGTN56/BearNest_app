@@ -44,6 +44,13 @@
     <string name="cd_favorite">Favorite</string>
     <string name="cd_expand">Collapse / expand</string>
 
+    <!-- Settings sections -->
+    <string name="section_subscriptions">Subscriptions</string>
+    <string name="section_themes">Themes</string>
+    <string name="section_bypass">Bypass list</string>
+    <string name="add_subscription">Add subscription</string>
+    <string name="subscriptions_empty">No subscriptions yet — add one above</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Proxy active</string>
     <string name="proxy_hint">Configure proxy in WiFi or use an app supporting SOCKS5</string>

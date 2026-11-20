@@ -43,6 +43,13 @@
     <string name="cd_favorite">Избранное</string>
     <string name="cd_expand">Свернуть / развернуть</string>
 
+    <!-- Разделы настроек -->
+    <string name="section_subscriptions">Подписки</string>
+    <string name="section_themes">Темы</string>
+    <string name="section_bypass">Байпас-лист</string>
+    <string name="add_subscription">Добавить подписку</string>
+    <string name="subscriptions_empty">Пока нет подписок — добавьте первую выше</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Прокси активен</string>
     <string name="proxy_hint">Настройте прокси в WiFi или используйте приложение поддерживающее SOCKS5</string>
