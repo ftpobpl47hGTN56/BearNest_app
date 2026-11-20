@@ -25,6 +25,25 @@
     <string name="action_best_server">Best server</string>
     <string name="servers_title_with_count" formatted="false">Servers (%d)</string>
 
+    <!-- Sorting -->
+    <string name="action_sort">Sort</string>
+    <string name="sort_default">Default order</string>
+    <string name="sort_name">By name</string>
+    <string name="sort_ping">By ping</string>
+
+    <!-- Multi-subscription -->
+    <string name="action_refresh_all_subs">Refresh all subscriptions</string>
+    <string name="action_refresh_sub">Refresh</string>
+    <string name="action_clone_sub">Clone</string>
+    <string name="action_delete_sub">Delete subscription</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="confirm_delete_sub" formatted="false">Delete subscription "%s" and all its servers?</string>
+    <string name="sub_servers_count" formatted="false">Servers: %d</string>
+    <string name="sub_copy">copy</string>
+    <string name="cd_favorite">Favorite</string>
+    <string name="cd_expand">Collapse / expand</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Proxy active</string>
     <string name="proxy_hint">Configure proxy in WiFi or use an app supporting SOCKS5</string>

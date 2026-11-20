@@ -24,6 +24,25 @@
     <string name="action_best_server">Лучший сервер</string>
     <string name="servers_title_with_count" formatted="false">Серверы (%d)</string>
 
+    <!-- Сортировка -->
+    <string name="action_sort">Сортировка</string>
+    <string name="sort_default">По умолчанию</string>
+    <string name="sort_name">По названию</string>
+    <string name="sort_ping">По пингу</string>
+
+    <!-- Мультиподписка -->
+    <string name="action_refresh_all_subs">Обновить все подписки</string>
+    <string name="action_refresh_sub">Обновить</string>
+    <string name="action_clone_sub">Клонировать</string>
+    <string name="action_delete_sub">Удалить подписку</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="confirm_delete_sub" formatted="false">Удалить подписку «%s» и все её серверы?</string>
+    <string name="sub_servers_count" formatted="false">Серверов: %d</string>
+    <string name="sub_copy">копия</string>
+    <string name="cd_favorite">Избранное</string>
+    <string name="cd_expand">Свернуть / развернуть</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Прокси активен</string>
     <string name="proxy_hint">Настройте прокси в WiFi или используйте приложение поддерживающее SOCKS5</string>
