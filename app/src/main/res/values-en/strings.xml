@@ -51,6 +51,16 @@
     <string name="add_subscription">Add subscription</string>
     <string name="subscriptions_empty">No subscriptions yet — add one above</string>
 
+    <!-- Bypass list: edit / import / export -->
+    <string name="bypass_import">Import</string>
+    <string name="bypass_export">Export</string>
+    <string name="edit_domain_title">Edit domain</string>
+    <string name="action_save">Save</string>
+    <string name="bypass_import_result" formatted="false">Imported: %1$d, already present: %2$d</string>
+    <string name="bypass_import_error">Failed to read file</string>
+    <string name="bypass_export_done">Bypass list exported</string>
+    <string name="bypass_export_empty">List is empty — nothing to export</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Proxy active</string>
     <string name="proxy_hint">Configure proxy in WiFi or use an app supporting SOCKS5</string>

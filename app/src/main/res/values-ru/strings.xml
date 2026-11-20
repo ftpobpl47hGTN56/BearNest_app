@@ -50,6 +50,16 @@
     <string name="add_subscription">Добавить подписку</string>
     <string name="subscriptions_empty">Пока нет подписок — добавьте первую выше</string>
 
+    <!-- Байпас-лист: правка / импорт / экспорт -->
+    <string name="bypass_import">Импорт</string>
+    <string name="bypass_export">Экспорт</string>
+    <string name="edit_domain_title">Изменить домен</string>
+    <string name="action_save">Сохранить</string>
+    <string name="bypass_import_result" formatted="false">Импортировано: %1$d, уже было: %2$d</string>
+    <string name="bypass_import_error">Не удалось прочитать файл</string>
+    <string name="bypass_export_done">Байпас-лист экспортирован</string>
+    <string name="bypass_export_empty">Список пуст — нечего экспортировать</string>
+
     <!-- Proxy -->
     <string name="proxy_active">Прокси активен</string>
     <string name="proxy_hint">Настройте прокси в WiFi или используйте приложение поддерживающее SOCKS5</string>
