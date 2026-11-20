@@ -141,7 +141,7 @@
             android:layout_width="160dp"
             android:layout_height="160dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="12dp"
             app:cornerRadius="80dp"
             app:icon="@drawable/ic_power_24"
             app:iconGravity="top"
@@ -151,6 +151,18 @@
             android:text="@string/connect"
             android:textStyle="bold"
             android:textAppearance="?attr/textAppearanceLabelMedium"/>
+
+        <!-- Состояние соединения: «Подключено · <сервер>» / «Отключено» -->
+        <TextView
+            android:id="@+id/tv_conn_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textStyle="bold"
+            android:text="@string/conn_state_disconnected"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
 
         <!-- Карточка статуса TUN (скрыта по умолчанию) -->
         <com.google.android.material.card.MaterialCardView
