@@ -9,6 +9,9 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bearnest.vpn.R
@@ -16,6 +19,7 @@ import com.bearnest.vpn.databinding.FragmentThemesBinding
 import com.bearnest.vpn.databinding.ItemThemePreviewBinding
 import com.bearnest.vpn.ui.MainActivity
 import com.bearnest.vpn.ui.MainViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Экран выбора темы: сетка карточек с визуальным превью
@@ -74,15 +78,36 @@ class ThemesFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
 
-        val adapter = ThemeAdapter(THEMES, vm.theme.value) { theme ->
+        // [Fixed] Источник истины для рамки — SharedPreferences (синхронно),
+        // а не vm.theme: у StateFlow начальное значение "catppuccin", и сразу
+        // после recreate() фрагмент читал его ДО того, как DataStore успевал
+        // отдать сохранённую тему → рамка «залипала» на старой карточке.
+        val prefs = requireContext()
+            .getSharedPreferences(MainActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        val savedTheme = prefs.getString(MainActivity.KEY_THEME, "catppuccin") ?: "catppuccin"
+
+        val adapter = ThemeAdapter(THEMES, savedTheme) { theme ->
+            if (theme.key == adapter.selectedKey) return@ThemeAdapter
+            // Мгновенная реакция рамки — ещё до recreate()
+            adapter.selectedKey = theme.key
             vm.setTheme(theme.key)
-            requireContext()
-                .getSharedPreferences(MainActivity.PREFS_NAME, Context.MODE_PRIVATE)
-                .edit().putString(MainActivity.KEY_THEME, theme.key).apply()
+            prefs.edit().putString(MainActivity.KEY_THEME, theme.key).apply()
             activity?.recreate()
         }
         binding.recyclerThemes.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.recyclerThemes.adapter = adapter
+        // Без анимаций — notifyDataSetChanged при смене рамки не должен мигать
+        binding.recyclerThemes.itemAnimator = null
+
+        // Подстраховка: если тема поменялась извне (или DataStore прислал
+        // актуальное значение) — рамка догонит реактивно.
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.theme.collect { key ->
+                    if (key.isNotEmpty()) adapter.selectedKey = key
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -94,9 +119,18 @@ class ThemesFragment : Fragment() {
 
     private inner class ThemeAdapter(
         private val items: List<ThemeItem>,
-        private val currentKey: String,
+        initialKey: String,
         private val onClick: (ThemeItem) -> Unit
     ) : RecyclerView.Adapter<ThemeAdapter.VH>() {
+
+        /** Ключ темы с рамкой. Обновляется и по клику, и извне через collect. */
+        var selectedKey: String = initialKey
+            set(value) {
+                if (field != value) {
+                    field = value
+                    notifyDataSetChanged()
+                }
+            }
 
         inner class VH(val b: ItemThemePreviewBinding) : RecyclerView.ViewHolder(b.root)
 
@@ -121,7 +155,7 @@ class ThemesFragment : Fragment() {
             b.tvThemeName.text = ctx.getString(item.nameRes)
 
             // Выделение текущей темы рамкой colorPrimary
-            val selected = item.key == currentKey
+            val selected = item.key == selectedKey
             b.root.strokeWidth = if (selected)
                 (2 * ctx.resources.displayMetrics.density).toInt() else 0
 
