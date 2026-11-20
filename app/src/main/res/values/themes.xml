@@ -93,4 +93,89 @@
         <item name="colorControlNormal">#2B0830</item>
     </style>
 
+    <!-- Ocean — тёмная сине-бирюзовая -->
+    <style name="Theme.BearNest.Ocean" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/ocean_primary</item>
+        <item name="colorOnPrimary">@color/ocean_on_primary</item>
+        <item name="colorSecondary">@color/ocean_secondary</item>
+        <item name="android:colorBackground">@color/ocean_background</item>
+        <item name="colorSurface">@color/ocean_surface</item>
+        <item name="colorOnSurface">@color/ocean_on_surface</item>
+        <item name="colorSurfaceVariant">@color/ocean_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/ocean_on_surface_variant</item>
+        <item name="colorError">@color/ocean_error</item>
+        <item name="android:windowBackground">@color/ocean_background</item>
+        <item name="android:statusBarColor">@color/ocean_background</item>
+        <item name="android:navigationBarColor">@color/ocean_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Sunset — тёмная тёплая -->
+    <style name="Theme.BearNest.Sunset" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/sunset_primary</item>
+        <item name="colorOnPrimary">@color/sunset_on_primary</item>
+        <item name="colorSecondary">@color/sunset_secondary</item>
+        <item name="android:colorBackground">@color/sunset_background</item>
+        <item name="colorSurface">@color/sunset_surface</item>
+        <item name="colorOnSurface">@color/sunset_on_surface</item>
+        <item name="colorSurfaceVariant">@color/sunset_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/sunset_on_surface_variant</item>
+        <item name="colorError">@color/sunset_error</item>
+        <item name="android:windowBackground">@color/sunset_background</item>
+        <item name="android:statusBarColor">@color/sunset_background</item>
+        <item name="android:navigationBarColor">@color/sunset_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Sakura — тёмная розовая -->
+    <style name="Theme.BearNest.Sakura" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/sakura_primary</item>
+        <item name="colorOnPrimary">@color/sakura_on_primary</item>
+        <item name="colorSecondary">@color/sakura_secondary</item>
+        <item name="android:colorBackground">@color/sakura_background</item>
+        <item name="colorSurface">@color/sakura_surface</item>
+        <item name="colorOnSurface">@color/sakura_on_surface</item>
+        <item name="colorSurfaceVariant">@color/sakura_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/sakura_on_surface_variant</item>
+        <item name="colorError">@color/sakura_error</item>
+        <item name="android:windowBackground">@color/sakura_background</item>
+        <item name="android:statusBarColor">@color/sakura_background</item>
+        <item name="android:navigationBarColor">@color/sakura_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Mint — тёмная мятная -->
+    <style name="Theme.BearNest.Mint" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/mint_primary</item>
+        <item name="colorOnPrimary">@color/mint_on_primary</item>
+        <item name="colorSecondary">@color/mint_secondary</item>
+        <item name="android:colorBackground">@color/mint_background</item>
+        <item name="colorSurface">@color/mint_surface</item>
+        <item name="colorOnSurface">@color/mint_on_surface</item>
+        <item name="colorSurfaceVariant">@color/mint_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/mint_on_surface_variant</item>
+        <item name="colorError">@color/mint_error</item>
+        <item name="android:windowBackground">@color/mint_background</item>
+        <item name="android:statusBarColor">@color/mint_background</item>
+        <item name="android:navigationBarColor">@color/mint_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Amethyst — тёмная фиолетовая -->
+    <style name="Theme.BearNest.Amethyst" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/amethyst_primary</item>
+        <item name="colorOnPrimary">@color/amethyst_on_primary</item>
+        <item name="colorSecondary">@color/amethyst_secondary</item>
+        <item name="android:colorBackground">@color/amethyst_background</item>
+        <item name="colorSurface">@color/amethyst_surface</item>
+        <item name="colorOnSurface">@color/amethyst_on_surface</item>
+        <item name="colorSurfaceVariant">@color/amethyst_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/amethyst_on_surface_variant</item>
+        <item name="colorError">@color/amethyst_error</item>
+        <item name="android:windowBackground">@color/amethyst_background</item>
+        <item name="android:statusBarColor">@color/amethyst_background</item>
+        <item name="android:navigationBarColor">@color/amethyst_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
 </resources>
